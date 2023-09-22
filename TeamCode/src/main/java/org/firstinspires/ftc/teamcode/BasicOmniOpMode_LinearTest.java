@@ -66,7 +66,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 @TeleOp(name="Basic: Omni Linear OpMode", group="Linear Opmode")
 @Disabled
 public class BasicOmniOpMode_LinearTest extends LinearOpMode {
-    //Change >:)
+    //Change >:) no way
     // Declare OpMode members for each of the 4 motors.
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor leftFrontDrive = null;
