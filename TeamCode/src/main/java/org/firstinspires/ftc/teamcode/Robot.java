@@ -28,11 +28,11 @@ public class Robot {
         rightDriveB.setDirection(DcMotor.Direction.FORWARD);
     }
 
-    public void Move(double leftPower, double rightPower)
+    public void Move(double LFPower, double RFPower, double LBPower, double RBPower)
     {
-        leftDriveF.setPower(leftPower);
-        leftDriveB.setPower(leftPower);
-        rightDriveF.setPower(rightPower);
-        rightDriveB.setPower(-rightPower);
+        leftDriveF.setPower(LFPower);
+        leftDriveB.setPower(LBPower);
+        rightDriveF.setPower(RFPower);
+        rightDriveB.setPower(-RBPower);
     }
 }

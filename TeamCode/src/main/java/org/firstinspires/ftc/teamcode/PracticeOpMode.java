@@ -85,34 +85,25 @@ public class PracticeOpMode extends LinearOpMode {
        while (opModeIsActive()) {
 
             // Setup a variable for each drive wheel to save power level for telemetry
-            double drive = -gamepad1.left_stick_y;
-            double turn  =  gamepad1.right_stick_x;
-            double leftPower    = Range.clip(drive + turn, -1.0, 1.0) ;
-            double rightPower   = Range.clip(drive - turn, -1.0, 1.0) ;
-            practiceRobot.Move(leftPower, rightPower);
+            double driveY = -gamepad1.left_stick_y; //Y Direction
+            double driveX = gamepad1.left_stick_x; //X Direction
+            double turn  =  gamepad1.right_stick_x; //Turn
 
-            // Choose to drive using either Tank Mode, or POV Mode
-            // Comment out the method that's not used.  The default below is POV.
+           //Wheels
+            double LFWheel = Range.clip(driveY + driveX + turn, -1.0, 1.0);
+            double RFWheel = Range.clip(driveY - driveX - turn, -1.0, 1.0);
+            double LBWheel = Range.clip(driveY - driveX + turn, -1.0, 1.0);
+            double RBWheel = Range.clip(driveY + driveX - turn, -1.0, 1.0);
 
-            // POV Mode uses left stick to go forward, and right stick to turn.
-            // - This uses basic math to combine motions and is easier to drive straight.
+            //double leftPower    = Range.clip(drive + turn, -1.0, 1.0) ;
+            //double rightPower   = Range.clip(drive - turn, -1.0, 1.0) ;
 
+            practiceRobot.Move(LFWheel, RFWheel, LBWheel, RBWheel);
 
-            //leftDriveF.setPower(0.5);
-            //leftDriveB.setPower(0.5);
-            //rightDriveF.setPower(0.5);
-            //rightDriveB.setPower(-0.5);
-
-            //sleep (2000);
-
-        //leftDriveF.setPower(0);
-        //leftDriveB.setPower(0);
-        //rightDriveF.setPower(0);
-        //rightDriveB.setPower(0);
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
+            //telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
             telemetry.update();
        }
     }
