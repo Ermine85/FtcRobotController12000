@@ -52,7 +52,7 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Basic: Linear OpMode", group="Linear Opmode")
+@TeleOp(name="Basic: HiBot Strafing", group="Linear Opmode")
 //@Disabled
 public class PracticeOpMode extends LinearOpMode {
 
