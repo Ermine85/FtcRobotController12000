@@ -35,6 +35,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+import com.qualcomm.robotcore.hardware.Servo;
 
 //import org.firstinspires.ftc.robotcontroller.external.samples.RobotHardware;
 
@@ -52,7 +53,7 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Basic: HiBot Strafing", group="Linear Opmode")
+@TeleOp(name="13727", group="Linear Opmode")
 //@Disabled
 public class PracticeOpMode extends LinearOpMode {
 
@@ -60,13 +61,14 @@ public class PracticeOpMode extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
     //Motors F = Front B = Back
     Robot practiceRobot = new Robot(this);
-
+    private Servo GateServo = null;
     @Override
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
         practiceRobot.init();
 
+        GateServo = hardwareMap.get(Servo.class, "gate_servo");
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
@@ -90,16 +92,24 @@ public class PracticeOpMode extends LinearOpMode {
             double turn  =  gamepad1.right_stick_x; //Turn
 
            //Wheels
-            double LFWheel = Range.clip(driveY + driveX + turn, -1.0, 1.0);
-            double RFWheel = Range.clip(driveY - driveX - turn, -1.0, 1.0);
-            double LBWheel = Range.clip(driveY - driveX + turn, -1.0, 1.0);
-            double RBWheel = Range.clip(driveY + driveX - turn, -1.0, 1.0);
+            double LFWheel = Range.clip(driveY - driveX + turn, -1.0, 1.0);
+            double RFWheel = Range.clip(driveY + driveX - turn, -1.0, 1.0);
+            double LBWheel = Range.clip(driveY + driveX + turn, -1.0, 1.0);
+            double RBWheel = Range.clip(driveY - driveX - turn, -1.0, 1.0);
 
             //double leftPower    = Range.clip(drive + turn, -1.0, 1.0) ;
             //double rightPower   = Range.clip(drive - turn, -1.0, 1.0) ;
 
             practiceRobot.Move(LFWheel, RFWheel, LBWheel, RBWheel);
 
+            if(gamepad1.right_bumper)
+            {
+                practiceRobot.RotateServo(0.01);
+            }
+            if(gamepad1.left_bumper)
+            {
+                practiceRobot.RotateServo(0.41);
+            }
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
