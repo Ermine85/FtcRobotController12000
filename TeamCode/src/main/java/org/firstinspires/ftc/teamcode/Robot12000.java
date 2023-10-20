@@ -10,6 +10,7 @@ public class Robot12000 {
     private DcMotor RightOmni = null; //right_omni
     private DcMotor LeftWheel = null; //left_wheel
     private DcMotor RightWheel = null; //right_wheel
+    private DcMotor IntakeMotor = null; //intake_motor
 
     private LinearOpMode OpMode = null;
     public Robot12000(LinearOpMode opMode) { OpMode = opMode; }
@@ -19,11 +20,13 @@ public class Robot12000 {
         RightOmni = OpMode.hardwareMap.get(DcMotor.class, "right_omni");
         LeftWheel = OpMode.hardwareMap.get(DcMotor.class, "left_wheel");
         RightWheel = OpMode.hardwareMap.get(DcMotor.class, "right_wheel");
+        IntakeMotor = OpMode.hardwareMap.get(DcMotor.class, "intake_motor");
 
         LeftOmni.setDirection(DcMotor.Direction.REVERSE);
         LeftWheel.setDirection(DcMotor.Direction.REVERSE);
         RightOmni.setDirection(DcMotor.Direction.FORWARD);
         RightWheel.setDirection(DcMotor.Direction.FORWARD);
+        IntakeMotor.setDirection(DcMotor.Direction.FORWARD);
 
     }
     public void Move(double leftPower, double rightPower)
@@ -32,6 +35,11 @@ public class Robot12000 {
         LeftWheel.setPower(leftPower);
         RightOmni.setPower(rightPower);
         RightWheel.setPower(rightPower);
+    }
+
+    public void Intake(double power)
+    {
+        IntakeMotor.setPower(power);
     }
 
 

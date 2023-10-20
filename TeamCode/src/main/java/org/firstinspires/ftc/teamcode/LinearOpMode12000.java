@@ -66,16 +66,6 @@ public class LinearOpMode12000 extends LinearOpMode {
         telemetry.update();
         RobotFunctions.init();
 
-        // Initialize the hardware variables. Note that the strings used here as parameters
-        // to 'get' must correspond to the names assigned during the robot configuration
-        // step (using the FTC Robot Controller app on the phone).
-
-
-        // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
-        // Pushing the left stick forward MUST make robot go forward. So adjust these two lines based on your first test drive.
-        // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
-
-
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         runtime.reset();
@@ -83,23 +73,32 @@ public class LinearOpMode12000 extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
        while (opModeIsActive()) {
 
-            // Setup a variable for each drive wheel to save power level for telemetry
+            // Joystick set-up
             double driveY = -gamepad1.left_stick_y; //Y Direction
             double driveX = Range.clip(gamepad1.left_stick_x, -0.5, 0.5) ; //X Direction
-            double turn  =  gamepad1.right_stick_x; //Turn
+            double turn  =  gamepad1.right_stick_x; //Turn stick
 
-           //Wheels
+           // Calculates Power needed for the wheels based on Joystick positions
             double RightPower = Range.clip(driveY - driveX - turn, -1.0, 1.0);
             double LeftPower = Range.clip(driveY + driveX + turn, -1.0, 1.0);
 
-
-            //double leftPower    = Range.clip(drive + turn, -1.0, 1.0) ;
-            //double rightPower   = Range.clip(drive - turn, -1.0, 1.0) ;
-
+            // Runs Move Function In Robot12000 Script -- Constant
             RobotFunctions.Move(LeftPower, RightPower);
 
+            //Gets Trigger Position and runs intake off of it
+            if(gamepad1.right_trigger > 0.25)
+            {
+                RobotFunctions.Intake(gamepad1.right_trigger); //Calls upon Intake Function (sets power of intake motor)
+            } else if (gamepad1.left_trigger > 0.25) {
+                RobotFunctions.Intake(-gamepad1.left_trigger); //Calls upon Intake Function
+            }
+            else
+            {
+                RobotFunctions.Intake(0); //Stops Motor if none of the triggers are pressed
+            }
 
-            // Show the elapsed game time and wheel power.
+
+           // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             //telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
             telemetry.update();
