@@ -30,6 +30,8 @@
 package org.firstinspires.ftc.teamcode;
 //package org.firstinspires.ftc.robotcontroller.external.samples;
 
+import android.provider.Telephony;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -57,14 +59,18 @@ public class LinearOpMode12000 extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
+
+
     //Motors F = Front B = Back
     Robot12000 RobotFunctions = new Robot12000(this);
 
+    public Thread slowIntakeThread = null;
     @Override
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
         RobotFunctions.init();
+
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -91,11 +97,28 @@ public class LinearOpMode12000 extends LinearOpMode {
                 RobotFunctions.Intake(gamepad1.right_trigger); //Calls upon Intake Function (sets power of intake motor)
             } else if (gamepad1.left_trigger > 0.25) {
                 RobotFunctions.Intake(-gamepad1.left_trigger); //Calls upon Intake Function
-            }
-            else
+            } else if(gamepad1.right_bumper)
+            {
+                RobotFunctions.Intake(0.25); //Base 0.25 speed for when you need it to go slow
+            } else if (gamepad1.left_bumper)
+            {
+                RobotFunctions.Intake(-0.25);
+            } else
             {
                 RobotFunctions.Intake(0); //Stops Motor if none of the triggers are pressed
             }
+
+            if(gamepad1.x)
+            {
+                RobotFunctions.HingeMotor(1);
+            }else if(gamepad1.y)
+            {
+                RobotFunctions.HingeMotor(-1);
+            }else
+            {
+                RobotFunctions.HingeMotor(0);
+            }
+
 
 
            // Show the elapsed game time and wheel power.
