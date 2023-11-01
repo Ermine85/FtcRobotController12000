@@ -119,6 +119,10 @@ public class LinearOpMode12000 extends LinearOpMode {
                 RobotFunctions.HingeMotor(0);
             }
 
+            if(gamepad1.a)
+            {
+                //RobotFunctions.Reverse();
+            }
 
 
            // Show the elapsed game time and wheel power.

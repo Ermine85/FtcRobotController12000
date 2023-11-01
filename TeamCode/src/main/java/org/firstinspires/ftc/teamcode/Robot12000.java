@@ -18,6 +18,8 @@ public class Robot12000 {
 
     private DcMotor HingeMotor = null; //hinge_motor
 
+    private boolean GoingForward = true;
+
     //Auto Move Distance
     public int newRightTarget = 0;
     public int newLeftTarget = 0;
@@ -108,7 +110,25 @@ public class Robot12000 {
         RightOmni.setPower(0);
     }
 
-
+    public void Reverse()
+    {
+        if (GoingForward == false)
+        {
+            LeftOmni.setDirection(DcMotor.Direction.FORWARD);
+            LeftWheel.setDirection(DcMotor.Direction.FORWARD);
+            RightOmni.setDirection(DcMotor.Direction.REVERSE);
+            RightWheel.setDirection(DcMotor.Direction.REVERSE);
+            GoingForward = true;
+        }
+        else
+        {
+            LeftOmni.setDirection(DcMotor.Direction.REVERSE);
+            LeftWheel.setDirection(DcMotor.Direction.REVERSE);
+            RightOmni.setDirection(DcMotor.Direction.FORWARD);
+            RightWheel.setDirection(DcMotor.Direction.FORWARD);
+            GoingForward = false;
+        }
+    }
 
 
 }

@@ -89,7 +89,7 @@ public class TestAuto12000 extends LinearOpMode {
         //LeftWheel.setPower(speed);
         while (RightWheel.isBusy())
         {
-            LeftWheel.setPower(speed);
+            LeftWheel.setPower(speed/1.14);
             /*
             if(newLeftTarget > 0.01)
             {
