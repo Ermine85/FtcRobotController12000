@@ -3,9 +3,12 @@ package org.firstinspires.ftc.teamcode;
 import android.graphics.Path;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.Range;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.IMU;
 public class Robot12000 {
     //Wheel Motors (6 total -- 4 omni -- 2 normal) ~Change to 4 mecanum later~
     //Distance per inch (encoder)
@@ -17,6 +20,10 @@ public class Robot12000 {
     private DcMotor IntakeMotor = null; //intake_motor
 
     private DcMotor HingeMotor = null; //hinge_motor
+
+    private IMU RobotIMU = null;
+
+    private Servo CheeseStick = null;
 
     private boolean GoingForward = true;
 
@@ -35,7 +42,8 @@ public class Robot12000 {
         RightWheel = OpMode.hardwareMap.get(DcMotor.class, "right_wheel");
         IntakeMotor = OpMode.hardwareMap.get(DcMotor.class, "intake_motor");
         HingeMotor = OpMode.hardwareMap.get(DcMotor.class, "hinge_motor");
-
+        RobotIMU = OpMode.hardwareMap.get(IMU.class, "imu");
+        CheeseStick = OpMode.hardwareMap.get(Servo.class, "cheese_stick");
         LeftOmni.setDirection(DcMotor.Direction.FORWARD);
         LeftWheel.setDirection(DcMotor.Direction.FORWARD);
         RightOmni.setDirection(DcMotor.Direction.REVERSE);
@@ -73,41 +81,9 @@ public class Robot12000 {
     }
 
     //Autonomous Move
-    public void AMove(double speed, double distanceInch)
+    public void Cheese(double position)
     {
-        //WheelEncoder(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        LeftWheel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        RightWheel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        //WheelEncoder(DcMotor.RunMode.RUN_USING_ENCODER);
-        RightWheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        LeftWheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        newLeftTarget = LeftWheel.getCurrentPosition() + (int)(distanceInch * COUNTS_PER_INCH);
-        newRightTarget = RightWheel.getCurrentPosition() + (int)(distanceInch * COUNTS_PER_INCH);
-
-        LeftWheel.setTargetPosition(newLeftTarget);
-        RightWheel.setTargetPosition(newRightTarget);
-
-        RightWheel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        LeftWheel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        while (LeftWheel.isBusy() && RightWheel.isBusy())
-        {
-            if(newLeftTarget > 0.01)
-            {
-                LeftOmni.setPower(speed);
-                RightOmni.setPower(speed);
-            }
-            else
-            {
-                LeftOmni.setPower(-speed);
-                RightOmni.setPower(-speed);
-            }
-        }
-
-        RightWheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        LeftWheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        LeftOmni.setPower(0);
-        RightOmni.setPower(0);
+        CheeseStick.setPosition(position);
     }
 
     public void Reverse()

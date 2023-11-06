@@ -35,6 +35,11 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.IMU;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 
 
 
@@ -47,6 +52,9 @@ public class TestAuto12000 extends LinearOpMode {
     private DcMotor RightOmni = null; //right_omni
     private DcMotor LeftWheel = null; //left_wheel
     private DcMotor RightWheel = null; //right_wheel
+
+    private IMU RobotIMU = null;
+    private Servo Stick = null;
     Robot12000 RobotFunctions = new Robot12000(this);
 
     static final double     COUNTS_PER_INCH  = (560 * 1) / (4 * 3.1415); //Counts per motor rev * Gear Reduction / Wheel diameter * pi
@@ -57,6 +65,7 @@ public class TestAuto12000 extends LinearOpMode {
         RightOmni = hardwareMap.get(DcMotor.class, "right_omni");
         LeftWheel = hardwareMap.get(DcMotor.class, "left_wheel");
         RightWheel = hardwareMap.get(DcMotor.class, "right_wheel");
+        Stick = hardwareMap.get(Servo.class, "cheese_stick");
 
         LeftOmni.setDirection(DcMotor.Direction.FORWARD);
         LeftWheel.setDirection(DcMotor.Direction.FORWARD);
@@ -64,10 +73,14 @@ public class TestAuto12000 extends LinearOpMode {
         RightWheel.setDirection(DcMotor.Direction.REVERSE);
         waitForStart();
         //Test Move
+        Stick.setPosition(1);
+        sleep(1000);
         AMove(0.5, 45);
 
 
     }
+
+
     public void AMove(double speed, double distanceInch)
     {
         //WheelEncoder(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -113,14 +126,7 @@ public class TestAuto12000 extends LinearOpMode {
         RightWheel.setPower(0);
     }
 
-    /*
-     *  Method to perform a relative move, based on encoder counts.
-     *  Encoders are not reset as the move is based on the current position.
-     *  Move will stop if any of three conditions occur:
-     *  1) Move gets to the desired position
-     *  2) Move runs out of time
-     *  3) Driver stops the opmode running.
-     */
+
 
 
 }

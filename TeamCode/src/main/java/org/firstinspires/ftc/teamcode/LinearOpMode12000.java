@@ -108,10 +108,10 @@ public class LinearOpMode12000 extends LinearOpMode {
                 RobotFunctions.Intake(0); //Stops Motor if none of the triggers are pressed
             }
 
-            if(gamepad1.x)
+            if(gamepad1.dpad_down)
             {
                 RobotFunctions.HingeMotor(1);
-            }else if(gamepad1.y)
+            }else if(gamepad1.dpad_up)
             {
                 RobotFunctions.HingeMotor(-1);
             }else
@@ -119,6 +119,13 @@ public class LinearOpMode12000 extends LinearOpMode {
                 RobotFunctions.HingeMotor(0);
             }
 
+            if(gamepad1.dpad_left)
+            {
+                RobotFunctions.Cheese(0.1);
+            }if(gamepad1.dpad_right)
+            {
+                RobotFunctions.Cheese(1);
+            }
             if(gamepad1.a)
             {
                 //RobotFunctions.Reverse();
