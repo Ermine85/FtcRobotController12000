@@ -80,7 +80,7 @@ public class TestAuto12000 extends LinearOpMode {
         Move(0.5, 45);
 
 
-    }
+    } // :(
     public void Turn(double degrees)
     {
         RobotIMU.resetYaw();
