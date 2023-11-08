@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -56,7 +57,7 @@ public class TestAuto12000 extends LinearOpMode {
     private IMU RobotIMU = null;
     private Servo Stick = null;
     Robot12000 RobotFunctions = new Robot12000(this);
-
+    //New wheel diameter of 12 cm
     static final double     COUNTS_PER_INCH  = (560 * 1) / (4 * 3.1415); //Counts per motor rev * Gear Reduction / Wheel diameter * pi
     @Override
     public void runOpMode() {
@@ -66,6 +67,7 @@ public class TestAuto12000 extends LinearOpMode {
         LeftWheel = hardwareMap.get(DcMotor.class, "left_wheel");
         RightWheel = hardwareMap.get(DcMotor.class, "right_wheel");
         Stick = hardwareMap.get(Servo.class, "cheese_stick");
+        RobotIMU = hardwareMap.get(IMU.class, "imu");
 
         LeftOmni.setDirection(DcMotor.Direction.FORWARD);
         LeftWheel.setDirection(DcMotor.Direction.FORWARD);
@@ -75,13 +77,30 @@ public class TestAuto12000 extends LinearOpMode {
         //Test Move
         Stick.setPosition(1);
         sleep(1000);
-        AMove(0.5, 45);
+        Move(0.5, 45);
 
 
     }
+    public void Turn(double degrees)
+    {
+        RobotIMU.resetYaw();
+        double Current = RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
 
+        while(Current > degrees)
+        {
+            RightWheel.setPower(0.5);
+            LeftWheel.setPower(-0.5);
 
-    public void AMove(double speed, double distanceInch)
+        }
+        while(Current < degrees)
+        {
+            RightWheel.setPower(-0.5);
+            LeftWheel.setPower(0.5);
+        }
+
+    }
+
+    public void Move(double speed, double distanceInch)
     {
         //WheelEncoder(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         LeftWheel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -102,19 +121,8 @@ public class TestAuto12000 extends LinearOpMode {
         //LeftWheel.setPower(speed);
         while (RightWheel.isBusy())
         {
-            LeftWheel.setPower(speed/1.14);
-            /*
-            if(newLeftTarget > 0.01)
-            {
-                LeftOmni.setPower(speed);
-                RightOmni.setPower(speed);
-            }
-            else
-            {
-                LeftOmni.setPower(-speed);
-                RightOmni.setPower(-speed);
-            }
-            */
+            //LeftWheel.setPower(speed/1.14);
+            LeftWheel.setPower(speed);
 
         }
 
