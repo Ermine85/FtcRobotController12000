@@ -78,25 +78,32 @@ public class TestAuto12000 extends LinearOpMode {
         Stick.setPosition(1);
         sleep(1000);
         Move(0.5, 45);
+        Turn(90.0);
 
-
-    } // :(
+    } // :)
     public void Turn(double degrees)
     {
         RobotIMU.resetYaw();
         double Current = RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
 
-        while(Current > degrees)
+        while(Current < degrees)
         {
+            Current = RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
             RightWheel.setPower(0.5);
             LeftWheel.setPower(-0.5);
 
         }
-        while(Current < degrees)
-        {
+
+        LeftOmni.setPower(0);
+        RightOmni.setPower(0);
+        LeftWheel.setPower(0);
+        RightWheel.setPower(0);
+
+ //       while(Current < degrees)
+ //       {
             RightWheel.setPower(-0.5);
             LeftWheel.setPower(0.5);
-        }
+ //       }
 
     }
 
