@@ -61,6 +61,14 @@ public class Robot12000 {
         RightWheel.setPower(rightPower);
     }
 
+    public void MoveOmni(double LBP, double LFP, double RBP, double RFP)
+    {
+        LeftOmni.setPower(LBP);
+        LeftWheel.setPower(LFP);
+        RightOmni.setPower(RBP);
+        RightWheel.setPower(RBP);
+    }
+
     //Intake Wheel SetPower
     public void Intake(double power)
     {

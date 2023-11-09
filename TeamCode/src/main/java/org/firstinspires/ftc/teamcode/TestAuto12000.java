@@ -44,7 +44,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 
 
 
-@Autonomous(name="12000 Test Auto", group="Robot")
+@Autonomous(name="12000 new Test Auto", group="Robot")
 public class TestAuto12000 extends LinearOpMode {
 
     public int newRightTarget = 0;
@@ -53,6 +53,8 @@ public class TestAuto12000 extends LinearOpMode {
     private DcMotor RightOmni = null; //right_omni
     private DcMotor LeftWheel = null; //left_wheel
     private DcMotor RightWheel = null; //right_wheel
+    private DcMotor Hinge = null;
+    private DcMotor Intake = null;
 
     private IMU RobotIMU = null;
     private Servo Stick = null;
@@ -66,6 +68,8 @@ public class TestAuto12000 extends LinearOpMode {
         RightOmni = hardwareMap.get(DcMotor.class, "right_omni");
         LeftWheel = hardwareMap.get(DcMotor.class, "left_wheel");
         RightWheel = hardwareMap.get(DcMotor.class, "right_wheel");
+        Hinge = hardwareMap.get(DcMotor.class, "hinge_motor");
+        Intake = hardwareMap.get(DcMotor.class, "intake_motor");
         Stick = hardwareMap.get(Servo.class, "cheese_stick");
         RobotIMU = hardwareMap.get(IMU.class, "imu");
 
@@ -75,24 +79,44 @@ public class TestAuto12000 extends LinearOpMode {
         RightWheel.setDirection(DcMotor.Direction.REVERSE);
         waitForStart();
         //Test Move
-        Stick.setPosition(1);
+        //Stick.setPosition(1);
         sleep(1000);
-        Move(0.5, 45);
-        Turn(90.0);
+        Move(0.5, 48);
+        /*Hinge.setPower(0.8);
+        sleep(2000);
+        Hinge.setPower(0);
+        Intake.setPower(-0.35);
+        sleep(2000);
+        Intake.setPower(0);
+        Hinge.setPower(-0.8);
+        sleep(2000);
+        Hinge.setPower(0);
+
+        Move(0.5, -3);
+        //Turn(90.0);
+        */
+
 
     } // :)
     public void Turn(double degrees)
     {
         RobotIMU.resetYaw();
         double Current = RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        telemetry.addData("Start loop", 0);
+        telemetry.update();
 
         while(Current < degrees)
         {
             Current = RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
-            RightWheel.setPower(0.5);
-            LeftWheel.setPower(-0.5);
-
+            RightWheel.setPower(-0.5);
+            LeftWheel.setPower(0.5);
+            telemetry.addData("Right: ", RightWheel.getCurrentPosition());
+            telemetry.addData("Left: ", LeftWheel.getCurrentPosition());
+            telemetry.update();
         }
+
+        telemetry.addData("Stop loop", 0);
+        telemetry.update();
 
         LeftOmni.setPower(0);
         RightOmni.setPower(0);
@@ -101,8 +125,8 @@ public class TestAuto12000 extends LinearOpMode {
 
  //       while(Current < degrees)
  //       {
-            RightWheel.setPower(-0.5);
-            LeftWheel.setPower(0.5);
+            //RightWheel.setPower(-0.5);
+            //LeftWheel.setPower(0.5);
  //       }
 
     }
@@ -110,10 +134,10 @@ public class TestAuto12000 extends LinearOpMode {
     public void Move(double speed, double distanceInch)
     {
         //WheelEncoder(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        LeftWheel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //LeftWheel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         RightWheel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         //WheelEncoder(DcMotor.RunMode.RUN_USING_ENCODER);
-        RightWheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //RightWheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         //LeftWheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         newLeftTarget =  (int)(distanceInch * COUNTS_PER_INCH);
@@ -125,16 +149,20 @@ public class TestAuto12000 extends LinearOpMode {
         RightWheel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         //LeftWheel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         RightWheel.setPower(speed);
-        //LeftWheel.setPower(speed);
+        LeftWheel.setPower(speed);
         while (RightWheel.isBusy())
         {
             //LeftWheel.setPower(speed/1.14);
-            LeftWheel.setPower(speed);
+            //LeftWheel.setPower(speed);
+            //Took out *1.5 temporarily -Shane
+            telemetry.addData("Right: ", RightWheel.getCurrentPosition());
+            telemetry.addData("Left: ", LeftWheel.getCurrentPosition());
+            telemetry.update();
 
         }
 
         RightWheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        //LeftWheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        LeftWheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         LeftOmni.setPower(0);
         RightOmni.setPower(0);
         LeftWheel.setPower(0);

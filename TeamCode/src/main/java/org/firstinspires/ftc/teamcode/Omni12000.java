@@ -30,46 +30,45 @@
 package org.firstinspires.ftc.teamcode;
 //package org.firstinspires.ftc.robotcontroller.external.samples;
 
-import android.provider.Telephony;
-
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 //import org.firstinspires.ftc.robotcontroller.external.samples.RobotHardware;
 
 
-/**
- * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
- * the autonomous or the teleop period of an FTC match. The names of OpModes appear on the menu
- * of the FTC Driver Station. When a selection is made from the menu, the corresponding OpMode
- * class is instantiated on the Robot Controller and executed.
- *
- * This particular OpMode just executes a basic Tank Drive Teleop for a two wheeled robot
- * It includes all the skeletal structure that all linear OpModes contain.
- *
- * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
- */
-
-@TeleOp(name="OpMode", group="Linear Opmode")
+@TeleOp(name="Omni", group="Linear Opmode")
 //@Disabled
-public class LinearOpMode12000 extends LinearOpMode {
+public class Omni12000 extends LinearOpMode {
 
+    private DcMotor LeftOmni = null;
+    private DcMotor LeftWheel = null;
+    private DcMotor RightOmni = null;
+    private DcMotor RightWheel = null;
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
 
 
     //Motors F = Front B = Back
-    Robot12000 RobotFunctions = new Robot12000(this);
+    //Robot12000 RobotFunctions = new Robot12000(this);
 
     public Thread slowIntakeThread = null;
     @Override
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
-        RobotFunctions.init();
+        //RobotFunctions.init();
+        LeftOmni = hardwareMap.get(DcMotor.class, "left_omni");
+        RightOmni = hardwareMap.get(DcMotor.class, "right_omni");
+        LeftWheel = hardwareMap.get(DcMotor.class, "left_wheel");
+        RightWheel = hardwareMap.get(DcMotor.class, "right_wheel");
+        LeftOmni.setDirection(DcMotor.Direction.FORWARD);
+        LeftWheel.setDirection(DcMotor.Direction.REVERSE);
+        RightOmni.setDirection(DcMotor.Direction.FORWARD);
+        RightWheel.setDirection(DcMotor.Direction.FORWARD);
 
 
         // Wait for the game to start (driver presses PLAY)
@@ -78,60 +77,38 @@ public class LinearOpMode12000 extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
        while (opModeIsActive()) {
+           double max;
 
-            // Joystick set-up
-            double driveY = -gamepad1.left_stick_y; //Y Direction
-            double driveX = Range.clip(gamepad1.left_stick_x, -0.5, 0.5) ; //X Direction
-            double turn  =  gamepad1.right_stick_x; //Turn stick
+           // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
+           double axial   = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
+           double lateral =  gamepad1.left_stick_x;
+           double yaw     =  gamepad1.right_stick_x;
 
-           // Calculates Power needed for the wheels based on Joystick positions
-            double RightPower = Range.clip(driveY - driveX - turn, -1.0, 1.0);
-            double LeftPower = Range.clip(driveY + driveX + turn, -1.0, 1.0);
+           double leftFrontPower  = axial + lateral + yaw;
+           double rightFrontPower = axial - lateral - yaw;
+           double leftBackPower   = axial - lateral + yaw;
+           double rightBackPower  = axial + lateral - yaw;
+
+           // Normalize the values so no wheel power exceeds 100%
+           // This ensures that the robot maintains the desired motion.
+           max = Math.max(Math.abs(leftFrontPower), Math.abs(rightFrontPower));
+           max = Math.max(max, Math.abs(leftBackPower));
+           max = Math.max(max, Math.abs(rightBackPower));
+
+           if (max > 1.0) {
+               leftFrontPower  /= max;
+               rightFrontPower /= max;
+               leftBackPower   /= max;
+               rightBackPower  /= max;
+           }
+
 
             // Runs Move Function In Robot12000 Script -- Constant
-            RobotFunctions.Move(LeftPower, RightPower);
-
-            //Gets Trigger Position and runs intake off of it
-            if(gamepad1.right_trigger > 0.25)
-            {
-                RobotFunctions.Intake(gamepad1.right_trigger); //Calls upon Intake Function (sets power of intake motor)
-            } else if (gamepad1.left_trigger > 0.25) {
-                RobotFunctions.Intake(-gamepad1.left_trigger); //Calls upon Intake Function
-            } else if(gamepad1.right_bumper)
-            {
-                RobotFunctions.Intake(0.25); //Base 0.25 speed for when you need it to go slow
-            } else if (gamepad1.left_bumper)
-            {
-                RobotFunctions.Intake(-0.25); //output
-            } else
-            {
-                RobotFunctions.Intake(0); //Stops Motor if none of the triggers are pressed
-            }
-
-            if(gamepad1.dpad_down)
-            {
-                RobotFunctions.HingeMotor(1);
-            }else if(gamepad1.dpad_up)
-            {
-                RobotFunctions.HingeMotor(-1);
-            }else
-            {
-                RobotFunctions.HingeMotor(0);
-            }
-
-            if(gamepad1.dpad_left)
-            {
-                RobotFunctions.Cheese(0.1);
-            }if(gamepad1.dpad_right)
-            {
-                RobotFunctions.Cheese(1);
-            }
-            if(gamepad1.a)
-            {
-                //RobotFunctions.Reverse();
-            }
-
-
+            //RobotFunctions.MoveOmni(leftBackPower, leftFrontPower, rightBackPower, rightFrontPower);
+           RightOmni.setPower(rightBackPower);
+           RightWheel.setPower(rightFrontPower);
+           LeftOmni.setPower(leftBackPower);
+           LeftWheel.setPower(leftFrontPower);
            // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             //telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
