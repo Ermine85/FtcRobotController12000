@@ -37,6 +37,8 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.Func;
+
 //import org.firstinspires.ftc.robotcontroller.external.samples.RobotHardware;
 
 
@@ -44,10 +46,11 @@ import com.qualcomm.robotcore.util.Range;
 //@Disabled
 public class Omni12000 extends LinearOpMode {
 
-    private DcMotor LeftOmni = null;
-    private DcMotor LeftWheel = null;
-    private DcMotor RightOmni = null;
-    private DcMotor RightWheel = null;
+    private DcMotor LeftFront = null;
+    private DcMotor LeftBack = null;
+    private DcMotor RightFront = null;
+    private DcMotor RightBack = null;
+    private Robot12000 Functions = null;
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -60,16 +63,8 @@ public class Omni12000 extends LinearOpMode {
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
-        //RobotFunctions.init();
-        LeftOmni = hardwareMap.get(DcMotor.class, "left_omni");
-        RightOmni = hardwareMap.get(DcMotor.class, "right_omni");
-        LeftWheel = hardwareMap.get(DcMotor.class, "left_wheel");
-        RightWheel = hardwareMap.get(DcMotor.class, "right_wheel");
-        LeftOmni.setDirection(DcMotor.Direction.FORWARD);
-        LeftWheel.setDirection(DcMotor.Direction.REVERSE);
-        RightOmni.setDirection(DcMotor.Direction.FORWARD);
-        RightWheel.setDirection(DcMotor.Direction.FORWARD);
-
+        Functions = new Robot12000(this);
+        Functions.init();
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -83,7 +78,7 @@ public class Omni12000 extends LinearOpMode {
            double axial   = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
            double lateral =  gamepad1.left_stick_x;
            double yaw     =  gamepad1.right_stick_x;
-
+            //Odom wheels 47 mm or 1 + 7/8
            double leftFrontPower  = axial + lateral + yaw;
            double rightFrontPower = axial - lateral - yaw;
            double leftBackPower   = axial - lateral + yaw;
@@ -102,13 +97,9 @@ public class Omni12000 extends LinearOpMode {
                rightBackPower  /= max;
            }
 
+           Functions.Move(leftFrontPower, rightFrontPower, leftBackPower, rightBackPower);
 
-            // Runs Move Function In Robot12000 Script -- Constant
-            //RobotFunctions.MoveOmni(leftBackPower, leftFrontPower, rightBackPower, rightFrontPower);
-           RightOmni.setPower(rightBackPower);
-           RightWheel.setPower(rightFrontPower);
-           LeftOmni.setPower(leftBackPower);
-           LeftWheel.setPower(leftFrontPower);
+
            // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             //telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);

@@ -38,67 +38,59 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.util.Range;
+
+import java.lang.Math;
+
+
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 
 
 
-@Autonomous(name="12000 new Test Auto", group="Robot")
+@Autonomous(name="12000", group="Robot")
 public class TestAuto12000 extends LinearOpMode {
 
-    public int newRightTarget = 0;
-    public int newLeftTarget = 0;
-    private DcMotor LeftOmni = null; //left_omni
-    private DcMotor RightOmni = null; //right_omni
-    private DcMotor LeftWheel = null; //left_wheel
-    private DcMotor RightWheel = null; //right_wheel
-    private DcMotor Hinge = null;
-    private DcMotor Intake = null;
+    public int newTarget = 0;
+    private DcMotor LeftFront = null;
+    private DcMotor LeftBack = null;
+    private DcMotor RightFront = null;
+    private DcMotor RightBack = null;
+    private DcMotor RightEncoder = null;
+    private DcMotor LeftEncoder = null;
 
+    private double FinalDistance = 0;
     private IMU RobotIMU = null;
-    private Servo Stick = null;
-    Robot12000 RobotFunctions = new Robot12000(this);
+
+    //Robot12000 RobotFunctions = new Robot12000(this);
     //New wheel diameter of 12 cm
-    static final double     COUNTS_PER_INCH  = (560 * 1) / (4 * 3.1415); //Counts per motor rev * Gear Reduction / Wheel diameter * pi
+    static final double     COUNTS_PER_INCH  = (819.2 * 1) / (2 * 3.1415); //Counts per motor rev * Gear Reduction / Wheel diameter * pi
     @Override
     public void runOpMode() {
 
-        LeftOmni = hardwareMap.get(DcMotor.class, "left_omni");
-        RightOmni = hardwareMap.get(DcMotor.class, "right_omni");
-        LeftWheel = hardwareMap.get(DcMotor.class, "left_wheel");
-        RightWheel = hardwareMap.get(DcMotor.class, "right_wheel");
-        Hinge = hardwareMap.get(DcMotor.class, "hinge_motor");
-        Intake = hardwareMap.get(DcMotor.class, "intake_motor");
-        Stick = hardwareMap.get(Servo.class, "cheese_stick");
+        LeftFront = hardwareMap.get(DcMotor.class, "left_front");
+        RightFront = hardwareMap.get(DcMotor.class, "right_front");
+        LeftBack = hardwareMap.get(DcMotor.class, "left_back");
+        RightBack = hardwareMap.get(DcMotor.class, "right_back");
+        RightEncoder = hardwareMap.get(DcMotor.class, "right_odom");
+        LeftEncoder = hardwareMap.get(DcMotor.class, "left_odom");
+
         RobotIMU = hardwareMap.get(IMU.class, "imu");
 
-        LeftOmni.setDirection(DcMotor.Direction.FORWARD);
-        LeftWheel.setDirection(DcMotor.Direction.FORWARD);
-        RightOmni.setDirection(DcMotor.Direction.REVERSE);
-        RightWheel.setDirection(DcMotor.Direction.REVERSE);
+        LeftFront.setDirection(DcMotor.Direction.REVERSE);
+        LeftBack.setDirection(DcMotor.Direction.REVERSE);
+        RightFront.setDirection(DcMotor.Direction.FORWARD);
+        RightBack.setDirection(DcMotor.Direction.FORWARD);
         waitForStart();
         //Test Move
         //Stick.setPosition(1);
         sleep(1000);
-        Move(0.5, 48);
-        /*Hinge.setPower(0.8);
-        sleep(2000);
-        Hinge.setPower(0);
-        Intake.setPower(-0.35);
-        sleep(2000);
-        Intake.setPower(0);
-        Hinge.setPower(-0.8);
-        sleep(2000);
-        Hinge.setPower(0);
-
-        Move(0.5, -3);
-        //Turn(90.0);
-        */
+        Move(0.2, 1, RightEncoder, LeftEncoder); // Speed, Distance, Encoders Used
 
 
     } // :)
-    public void Turn(double degrees)
+    /*public void Turn(double degrees)
     {
         RobotIMU.resetYaw();
         double Current = RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
@@ -129,46 +121,48 @@ public class TestAuto12000 extends LinearOpMode {
             //LeftWheel.setPower(0.5);
  //       }
 
-    }
+    }*/
 
-    public void Move(double speed, double distanceInch)
+    public void Move(double speed, double distanceInch, DcMotor encoder, DcMotor encoder2)
     {
-        //WheelEncoder(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        //LeftWheel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        RightWheel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        //WheelEncoder(DcMotor.RunMode.RUN_USING_ENCODER);
-        //RightWheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        //LeftWheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        newLeftTarget =  (int)(distanceInch * COUNTS_PER_INCH);
-        newRightTarget =  (int)(distanceInch * COUNTS_PER_INCH);
-
-        //LeftWheel.setTargetPosition(newLeftTarget);
-        RightWheel.setTargetPosition(newRightTarget);
-
-        RightWheel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        //LeftWheel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        RightWheel.setPower(speed);
-        LeftWheel.setPower(speed);
-        while (RightWheel.isBusy())
+        MotorSpeed(0, 0);
+        newTarget =  (int)(distanceInch);
+        encoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        encoder2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        encoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        encoder2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        encoder.setTargetPosition(newTarget);
+        encoder2.setTargetPosition(newTarget);
+        encoder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        encoder2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        while(encoder.isBusy() || encoder2.isBusy())
         {
-            //LeftWheel.setPower(speed/1.14);
-            //LeftWheel.setPower(speed);
-            //Took out *1.5 temporarily -Shane
-            telemetry.addData("Right: ", RightWheel.getCurrentPosition());
-            telemetry.addData("Left: ", LeftWheel.getCurrentPosition());
-            telemetry.update();
+            double difference = encoder.getCurrentPosition() - encoder2.getCurrentPosition();
+            double change = Range.clip(difference, -1.2, 1.2);;
+            if(difference >= 0)
+            {
+                MotorSpeed(speed * change, speed / change);
+            } else if (difference < 0) {
+                MotorSpeed(speed / change, speed * change);
+            }
 
         }
+        MotorSpeed(0, 0);
+        //RightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        encoder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        encoder2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        RightWheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        LeftWheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        LeftOmni.setPower(0);
-        RightOmni.setPower(0);
-        LeftWheel.setPower(0);
-        RightWheel.setPower(0);
     }
-
+    public void MotorSpeed(double P1speed, double P2speed)
+    {
+        LeftFront.setPower(P1speed);
+        RightFront.setPower(P2speed);
+        LeftBack.setPower(P2speed);
+        RightBack.setPower(P1speed);
+        telemetry.addData("MotorSpeed", "Pair1 " + P1speed);
+        telemetry.addData("MotorSpeed", "Pair2 " + P2speed);
+        telemetry.update();
+    }
 
 
 

@@ -12,20 +12,12 @@ import com.qualcomm.robotcore.hardware.IMU;
 public class Robot12000 {
     //Wheel Motors (6 total -- 4 omni -- 2 normal) ~Change to 4 mecanum later~
     //Distance per inch (encoder)
-    static final double     COUNTS_PER_INCH  = (537.6 * 1) / (4 * 3.1415); //Counts per motor rev * Gear Reduction / Wheel diameter * pi
-    private DcMotor LeftOmni = null; //left_omni
-    private DcMotor RightOmni = null; //right_omni
-    private DcMotor LeftWheel = null; //left_wheel
-    private DcMotor RightWheel = null; //right_wheel
-    private DcMotor IntakeMotor = null; //intake_motor
-
-    private DcMotor HingeMotor = null; //hinge_motor
-
+    static final double     COUNTS_PER_INCH  = (537.6 * 1) / (2 * 3.1415); //Counts per motor rev * Gear Reduction / Wheel diameter * pi
+    private DcMotor LeftFront = null; //left_front
+    private DcMotor RightFront = null; //right_front
+    private DcMotor LeftBack = null; //left_back
+    private DcMotor RightBack = null; //right_back
     private IMU RobotIMU = null;
-
-    private Servo CheeseStick = null;
-
-    private boolean GoingForward = true;
 
     //Auto Move Distance
     public int newRightTarget = 0;
@@ -36,83 +28,29 @@ public class Robot12000 {
     //All Variable/Motor SetUps
     public void init()
     {
-        LeftOmni = OpMode.hardwareMap.get(DcMotor.class, "left_omni");
-        RightOmni = OpMode.hardwareMap.get(DcMotor.class, "right_omni");
-        LeftWheel = OpMode.hardwareMap.get(DcMotor.class, "left_wheel");
-        RightWheel = OpMode.hardwareMap.get(DcMotor.class, "right_wheel");
-        IntakeMotor = OpMode.hardwareMap.get(DcMotor.class, "intake_motor");
-        HingeMotor = OpMode.hardwareMap.get(DcMotor.class, "hinge_motor");
+        LeftFront = OpMode.hardwareMap.get(DcMotor.class, "left_front");
+        RightFront = OpMode.hardwareMap.get(DcMotor.class, "right_front");
+        LeftBack = OpMode.hardwareMap.get(DcMotor.class, "left_back");
+        RightBack = OpMode.hardwareMap.get(DcMotor.class, "right_back");
         RobotIMU = OpMode.hardwareMap.get(IMU.class, "imu");
-        CheeseStick = OpMode.hardwareMap.get(Servo.class, "cheese_stick");
-        LeftOmni.setDirection(DcMotor.Direction.FORWARD);
-        LeftWheel.setDirection(DcMotor.Direction.FORWARD);
-        RightOmni.setDirection(DcMotor.Direction.REVERSE);
-        RightWheel.setDirection(DcMotor.Direction.REVERSE);
-        IntakeMotor.setDirection(DcMotor.Direction.FORWARD);
-        HingeMotor.setDirection(DcMotor.Direction.FORWARD);
+        LeftFront.setDirection(DcMotor.Direction.REVERSE);
+        LeftBack.setDirection(DcMotor.Direction.REVERSE);
+        RightFront.setDirection(DcMotor.Direction.FORWARD);
+        RightBack.setDirection(DcMotor.Direction.FORWARD);
 
+    }
+
+
+    public void Move(double LF, double RF, double LB, double RB)
+    {
+        RightBack.setPower(RB);
+        RightFront.setPower(RF);
+        LeftBack.setPower(LB);
+        LeftFront.setPower(LF);
     }
     //Move OpMode
-    public void Move(double leftPower, double rightPower)
-    {
-        LeftOmni.setPower(leftPower);
-        LeftWheel.setPower(leftPower);
-        RightOmni.setPower(rightPower);
-        RightWheel.setPower(rightPower);
-    }
 
-    public void MoveOmni(double LBP, double LFP, double RBP, double RFP)
-    {
-        LeftOmni.setPower(LBP);
-        LeftWheel.setPower(LFP);
-        RightOmni.setPower(RBP);
-        RightWheel.setPower(RBP);
-    }
 
-    //Intake Wheel SetPower
-    public void Intake(double power)
-    {
-        IntakeMotor.setPower(power);
-    }
-
-    //Changes Wheel Types ("RUN_USING_ENCODER" "RUN_WITHOUT_ENCODER" "STOP_AND_RESET_ENCODER")
-    public void WheelEncoder()
-    {
-
-        //LeftWheel.setMode(type);
-        //RightWheel.setMode(type);
-    }
-
-    public void HingeMotor(double power)
-    {
-        HingeMotor.setPower(power);
-    }
-
-    //Autonomous Move
-    public void Cheese(double position)
-    {
-        CheeseStick.setPosition(position);
-    }
-
-    public void Reverse()
-    {
-        if (GoingForward == false)
-        {
-            LeftOmni.setDirection(DcMotor.Direction.FORWARD);
-            LeftWheel.setDirection(DcMotor.Direction.FORWARD);
-            RightOmni.setDirection(DcMotor.Direction.REVERSE);
-            RightWheel.setDirection(DcMotor.Direction.REVERSE);
-            GoingForward = true;
-        }
-        else
-        {
-            LeftOmni.setDirection(DcMotor.Direction.REVERSE);
-            LeftWheel.setDirection(DcMotor.Direction.REVERSE);
-            RightOmni.setDirection(DcMotor.Direction.FORWARD);
-            RightWheel.setDirection(DcMotor.Direction.FORWARD);
-            GoingForward = false;
-        }
-    }
 
 
 }

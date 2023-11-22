@@ -87,7 +87,7 @@ public class LinearOpMode12000 extends LinearOpMode {
            // Calculates Power needed for the wheels based on Joystick positions
             double RightPower = Range.clip(driveY - driveX - turn, -1.0, 1.0);
             double LeftPower = Range.clip(driveY + driveX + turn, -1.0, 1.0);
-
+            /*
             // Runs Move Function In Robot12000 Script -- Constant
             RobotFunctions.Move(LeftPower, RightPower);
 
@@ -132,7 +132,7 @@ public class LinearOpMode12000 extends LinearOpMode {
             }
 
 
-           // Show the elapsed game time and wheel power.
+           Show the elapsed game time and wheel power.*/
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             //telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
             telemetry.update();
