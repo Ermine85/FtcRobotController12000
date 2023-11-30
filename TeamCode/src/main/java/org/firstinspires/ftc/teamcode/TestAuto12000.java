@@ -29,6 +29,8 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import android.view.inputmethod.CorrectionInfo;
+
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
@@ -41,6 +43,7 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.Range;
 
 import java.lang.Math;
+import java.util.Vector;
 
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -60,12 +63,14 @@ public class TestAuto12000 extends LinearOpMode {
     private DcMotor RightEncoder = null;
     private DcMotor LeftEncoder = null;
 
+    private Vector<Double> InitialPosition = new Vector<Double>(3);
+    private Vector<Double> CurrentPosition = new Vector<Double>(3);
     private double FinalDistance = 0;
     private IMU RobotIMU = null;
 
     //Robot12000 RobotFunctions = new Robot12000(this);
     //New wheel diameter of 12 cm
-    static final double     COUNTS_PER_INCH  = (819.2 * 1) / (2 * 3.1415); //Counts per motor rev * Gear Reduction / Wheel diameter * pi
+    private double COUNTS_PER_INCH  = ((2 * Math.PI * 2) / 8192) * 2.54 ; // 2pi * wheel radios / encoder tpr
     @Override
     public void runOpMode() {
 
@@ -78,52 +83,23 @@ public class TestAuto12000 extends LinearOpMode {
 
         RobotIMU = hardwareMap.get(IMU.class, "imu");
 
-        LeftFront.setDirection(DcMotor.Direction.REVERSE);
-        LeftBack.setDirection(DcMotor.Direction.REVERSE);
+        LeftFront.setDirection(DcMotor.Direction.FORWARD);
+        LeftBack.setDirection(DcMotor.Direction.FORWARD);
         RightFront.setDirection(DcMotor.Direction.FORWARD);
         RightBack.setDirection(DcMotor.Direction.FORWARD);
+        StartVector(InitialPosition, 0, 0, 10);
+        StartVector(CurrentPosition, 0, 0,10);
         waitForStart();
         //Test Move
         //Stick.setPosition(1);
+        MoveTo(12, 12, 0, 3,3,0.2);
         sleep(1000);
-        Move(0.2, 1, RightEncoder, LeftEncoder); // Speed, Distance, Encoders Used
+
 
 
     } // :)
-    /*public void Turn(double degrees)
-    {
-        RobotIMU.resetYaw();
-        double Current = RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
-        telemetry.addData("Start loop", 0);
-        telemetry.update();
 
-        while(Current < degrees)
-        {
-            Current = RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
-            RightWheel.setPower(-0.5);
-            LeftWheel.setPower(0.5);
-            telemetry.addData("Right: ", RightWheel.getCurrentPosition());
-            telemetry.addData("Left: ", LeftWheel.getCurrentPosition());
-            telemetry.update();
-        }
-
-        telemetry.addData("Stop loop", 0);
-        telemetry.update();
-
-        LeftOmni.setPower(0);
-        RightOmni.setPower(0);
-        LeftWheel.setPower(0);
-        RightWheel.setPower(0);
-
- //       while(Current < degrees)
- //       {
-            //RightWheel.setPower(-0.5);
-            //LeftWheel.setPower(0.5);
- //       }
-
-    }*/
-
-    public void Move(double speed, double distanceInch, DcMotor encoder, DcMotor encoder2)
+    /* public void Move(double speed, double distanceInch, DcMotor encoder, DcMotor encoder2)
     {
         MotorSpeed(0, 0);
         newTarget =  (int)(distanceInch);
@@ -152,7 +128,7 @@ public class TestAuto12000 extends LinearOpMode {
         encoder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         encoder2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-    }
+    } */
     public void MotorSpeed(double P1speed, double P2speed)
     {
         LeftFront.setPower(P1speed);
@@ -164,6 +140,75 @@ public class TestAuto12000 extends LinearOpMode {
         telemetry.update();
     }
 
+    public void MoveTo(double TargetX, double TargetY, double TargetAngle, double PositionTolerance, double AngleTolerance, double Speed)
+    {
+        RightEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        LeftEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        RightEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        LeftEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        SetVector(CurrentPosition, InitialPosition.get(0), InitialPosition.get(1), InitialPosition.get(2));
+        double RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
+        while(RB > PositionTolerance)
+        {
+
+            double AngleDelta = Math.atan((TargetX - CurrentPosition.get(0))/(TargetY - CurrentPosition.get(1)));
+            double RobotYaw = RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+
+            if((TargetX - CurrentPosition.get(0) < 0))
+            {
+                AngleDelta = AngleDelta + Math.PI;
+            }
+            double RobotAngle = AngleDelta - RobotYaw + Math.PI;
+            //Motor Speed
+            double M1 = (Math.sin(RobotAngle) + Math.cos(RobotAngle)); //LF
+            double M2 = (Math.sin(RobotAngle) - Math.cos(RobotAngle)); //RF
+            double M3 = (-Math.sin(RobotAngle) + Math.cos(RobotAngle)); //LB
+            double M4 = (-Math.sin(RobotAngle) - Math.cos(RobotAngle)); //RB
+            double Mmax;
+
+            Mmax = Math.max(M1, M2);
+            Mmax = Math.max(Mmax, M3);
+            Mmax = Math.max(Mmax, M4);
+
+            if(Mmax > 1)
+            {
+                M1 = M1/Mmax;
+                M2 = M2/Mmax;
+                M3 = M3/Mmax;
+                M4 = M4/Mmax;
+            }
+
+            LeftFront.setPower(M1 * Speed);
+            RightFront.setPower(M2 * Speed);
+            LeftBack.setPower(M3 * Speed);
+            RightBack.setPower(M4 * Speed);
+
+            RobotYaw = RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+            double DeltaX = (RightEncoder.getCurrentPosition() * Math.cos(Math.PI/4 + RobotYaw)) - (LeftEncoder.getCurrentPosition() * Math.cos(Math.PI/4 - RobotYaw));
+            double DeltaY = (RightEncoder.getCurrentPosition() * Math.sin(Math.PI/4 + RobotYaw)) + (LeftEncoder.getCurrentPosition() * Math.sin(Math.PI/4 - RobotYaw));
+
+            SetVector(CurrentPosition, CurrentPosition.get(0) + (DeltaX * COUNTS_PER_INCH), CurrentPosition.get(1) + (DeltaY * COUNTS_PER_INCH), RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
+            RightEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            LeftEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            RightEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            LeftEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
+        SetVector(InitialPosition, CurrentPosition.get(0), CurrentPosition.get(1), CurrentPosition.get(2));
+    }
+
+    public void SetVector(Vector vector, double X, double Y, double angle )
+    {
+        vector.set(0, X);
+        vector.set(1, Y);
+        vector.set(2, angle);
+    }
+    public void StartVector(Vector vector, double X, double Y, double angle)
+    {
+        vector.add(X);
+        vector.add(Y);
+        vector.add(angle);
+    }
 
 
 }
