@@ -32,6 +32,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -62,8 +63,10 @@ public class ObjectRecognitionTFThing extends LinearOpMode {
     private static final String TFOD_MODEL_FILE = "/sdcard/FIRST/tflitemodels/myCustomModel.tflite";
     // Define the labels recognized in the model for TFOD (must be in training order!)
     private static final String[] LABELS = {
-       "Pixel",
+       "Prop",
     };
+
+    private ElapsedTime   runtime = new ElapsedTime();
 
     /**
      * The variable to store our instance of the TensorFlow Object Detection processor.
@@ -79,6 +82,7 @@ public class ObjectRecognitionTFThing extends LinearOpMode {
     public void runOpMode() {
 
         initTfod();
+        int position;
 
         // Wait for the DS start button to be touched.
         telemetry.addData("DS preview on/off", "3 dots, Camera Stream");
@@ -109,8 +113,8 @@ public class ObjectRecognitionTFThing extends LinearOpMode {
 
     }   // end runOpMode()
 
-    private void FindProp() {
-    }
+    // private void FindProp() {
+    // }
 
     /**
      * Initialize the TensorFlow Object Detection processor.
@@ -125,12 +129,12 @@ public class ObjectRecognitionTFThing extends LinearOpMode {
             // choose one of the following:
             //   Use setModelAssetName() if the custom TF Model is built in as an asset (AS only).
             //   Use setModelFileName() if you have downloaded a custom team model to the Robot Controller.
-            //.setModelAssetName(TFOD_MODEL_ASSET)
+            .setModelAssetName(TFOD_MODEL_ASSET)
             //.setModelFileName(TFOD_MODEL_FILE)
 
             // The following default settings are available to un-comment and edit as needed to 
             // set parameters for custom models.
-            //.setModelLabels(LABELS)
+            .setModelLabels(LABELS)
             //.setIsModelTensorFlow2(true)
             //.setIsModelQuantized(true)
             //.setModelInputSize(300)
@@ -179,22 +183,47 @@ public class ObjectRecognitionTFThing extends LinearOpMode {
     /**
      * Add telemetry about TensorFlow Object Detection (TFOD) recognitions.
      */
-    private void telemetryTfod() {
+    private int FindProp() {
+        tfod.setZoom(1.0);
 
-        List<Recognition> currentRecognitions = tfod.getRecognitions();
-        telemetry.addData("# Objects Detected", currentRecognitions.size());
+        double conf = 0.0d;
+        double x = 0.0d;
+        double y = 0.0d;
+        int position = 2;
 
-        // Step through the list of recognitions and display info for each one.
-        for (Recognition recognition : currentRecognitions) {
-            double x = (recognition.getLeft() + recognition.getRight()) / 2 ;
-            double y = (recognition.getTop()  + recognition.getBottom()) / 2 ;
+        runtime.reset();
 
-            telemetry.addData(""," ");
-            telemetry.addData("Image", "%s (%.0f %% Conf.)", recognition.getLabel(), recognition.getConfidence() * 100);
-            telemetry.addData("- Position", "%.0f / %.0f", x, y);
-            telemetry.addData("- Size", "%.0f x %.0f", recognition.getWidth(), recognition.getHeight());
-        }   // end for() loop
+        while (conf < 0.75 && opModeIsActive() && (runtime.seconds() <= 3.0)) {
 
+            List<Recognition> currentRecognitions = tfod.getRecognitions();
+            telemetry.addData("# Objects Detected", currentRecognitions.size());
+
+            // Step through the list of recognitions and display info for each one.
+            for (Recognition recognition : currentRecognitions) {
+                x = (recognition.getLeft() + recognition.getRight()) / 2;
+                y = (recognition.getTop() + recognition.getBottom()) / 2;
+                conf = recognition.getConfidence();
+
+                telemetry.addData("", " ");
+                telemetry.addData("Image", "%s (%.0f %% Conf.)", recognition.getLabel(), recognition.getConfidence() * 100);
+                telemetry.addData("- Position", "%.0f / %.0f", x, y);
+                telemetry.addData("- Size", "%.0f x %.0f", recognition.getWidth(), recognition.getHeight());
+                sleep(500);
+            }       // end for() loop
+            telemetry.update();
+        }       // end while() loop
+        if (runtime.seconds() > 3.0) {
+            position = 2;
+        }
+        else {
+            if (x <=250) {
+                position = 0;
+            }
+            else {
+                position = 1;
+            }
+        }
+        return(position);
     }   // end method telemetryTfod()
 
 }   // end class
