@@ -67,10 +67,11 @@ public class TestAuto12000 extends LinearOpMode {
     private Vector<Double> CurrentPosition = new Vector<Double>(3);
     private double FinalDistance = 0;
     private IMU RobotIMU = null;
+    private double StartAngle = 0;
 
     //Robot12000 RobotFunctions = new Robot12000(this);
     //New wheel diameter of 12 cm
-    private double COUNTS_PER_INCH  = ((2 * Math.PI * 2) / 8192) * 2.54 ; // 2pi * wheel radios / encoder tpr
+    private double COUNTS_PER_INCH  = (((2 * Math.PI * 2) / 8192) * 2.54 * 18) / 70 ; // 2pi * wheel radios / encoder tpr
     @Override
     public void runOpMode() {
 
@@ -87,12 +88,13 @@ public class TestAuto12000 extends LinearOpMode {
         LeftBack.setDirection(DcMotor.Direction.FORWARD);
         RightFront.setDirection(DcMotor.Direction.FORWARD);
         RightBack.setDirection(DcMotor.Direction.FORWARD);
-        StartVector(InitialPosition, 0, 0, 10);
-        StartVector(CurrentPosition, 0, 0,10);
+        StartAngle = RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+        StartVector(InitialPosition, 0, 0, 10); // might want to be SetVector
+        StartVector(CurrentPosition, 0, 0,10);  // ^
         waitForStart();
         //Test Move
         //Stick.setPosition(1);
-        MoveTo(12, 12, 0, 3,3,0.2);
+        MoveTo(18, 18, 0, 3,3,0.2);
         sleep(1000);
 
 
@@ -146,20 +148,87 @@ public class TestAuto12000 extends LinearOpMode {
         LeftEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         RightEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         LeftEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        double Crx = 0;
+        double Cry = 0;
+        double Cfx = 0;
+        double Cfy = 0;
 
         SetVector(CurrentPosition, InitialPosition.get(0), InitialPosition.get(1), InitialPosition.get(2));
-        double RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
+
+        //Find distance from target
+        //double RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
+        double RB = 5;
+
         while(RB > PositionTolerance)
         {
+            //RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
+            //double AngleDelta = Math.atan((TargetX - CurrentPosition.get(0))/(TargetY - CurrentPosition.get(1)));
+            double RobotYaw = StartAngle - RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
 
-            double AngleDelta = Math.atan((TargetX - CurrentPosition.get(0))/(TargetY - CurrentPosition.get(1)));
-            double RobotYaw = RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+            //Calculate robot distance and direction on robot frame of reference
+            double D1 = COUNTS_PER_INCH*Math.sqrt(Math.pow(LeftEncoder.getCurrentPosition(),2)+ Math.pow(RightEncoder.getCurrentPosition(),2));
+            double alpha = LeftEncoder.getCurrentPosition();
+            double beta = RightEncoder.getCurrentPosition();
 
-            if((TargetX - CurrentPosition.get(0) < 0))
+            double Theta1 = Math.atan(beta/alpha)-Math.PI/4.0;
+
+            if(alpha == 0 && beta >= 0)
             {
-                AngleDelta = AngleDelta + Math.PI;
+                Theta1 = Math.PI/4;
+            }else if(alpha == 0 && beta < 0)
+            {
+                Theta1 = 5*Math.PI/4;
             }
-            double RobotAngle = AngleDelta - RobotYaw + Math.PI;
+
+            //Account for issue with arctan since it only returns 0-PI
+            if(alpha < 0)
+            {
+                Theta1 = Theta1 + Math.PI;
+            }
+            //Calculate Robot frame of reference X and Y distance moved
+            double Drx = Math.sin(Theta1)*D1;
+            double Dry = Math.cos(Theta1)*D1;
+
+            //Convert distance and direction from robot frame of reference to field frame of reference
+            //Angle of robot in field reference
+            double ThetaF = Theta1 + RobotYaw;
+            //Distance robot has moved in x-direction
+            double Dfx = Math.sin(ThetaF)*D1;
+            //Distance robot has moved in y-direction
+            double Dfy = Math.cos(ThetaF)*D1;
+
+            //track current position
+            Crx = Crx + Drx;
+            Cry = Cry + Dry;
+            Cfx = Cfx + Dfx;
+            Cfy = Cfy + Dfy;
+
+            double DeltaX = TargetX - Cfx;
+            double DeltaY = TargetY - Cfy;
+
+            double R = Math.sqrt(Math.pow(DeltaX, 2) + Math.pow(DeltaY, 2));
+            double Ttf = Math.atan(DeltaX/DeltaY);
+            if(DeltaY == 0 && DeltaX >= 0)
+            {
+                Ttf = 0;
+            }else if(DeltaY == 0 && DeltaX < 0)
+            {
+                Ttf = Math.PI;
+            }
+
+            telemetry.addData("Robot X",Crx);
+            telemetry.addData("Robot Y",Cry);
+            telemetry.addData("Field X",Cfx);
+            telemetry.addData("Field Y",Cfy);
+            telemetry.addData("Robot Theta",Theta1);
+            telemetry.addData("Field Theta",ThetaF);
+            telemetry.addData("target direction",Ttf*360/(2*Math.PI));
+            telemetry.addData("target radius", R);
+            telemetry.addData("robot imu", RobotYaw*360/(2*Math.PI));
+            telemetry.update();
+
+
+            double RobotAngle = - Ttf + RobotYaw + Math.PI;
             //Motor Speed
             double M1 = (Math.sin(RobotAngle) + Math.cos(RobotAngle)); //LF
             double M2 = (Math.sin(RobotAngle) - Math.cos(RobotAngle)); //RF
@@ -184,11 +253,11 @@ public class TestAuto12000 extends LinearOpMode {
             LeftBack.setPower(M3 * Speed);
             RightBack.setPower(M4 * Speed);
 
-            RobotYaw = RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
-            double DeltaX = (RightEncoder.getCurrentPosition() * Math.cos(Math.PI/4 + RobotYaw)) - (LeftEncoder.getCurrentPosition() * Math.cos(Math.PI/4 - RobotYaw));
-            double DeltaY = (RightEncoder.getCurrentPosition() * Math.sin(Math.PI/4 + RobotYaw)) + (LeftEncoder.getCurrentPosition() * Math.sin(Math.PI/4 - RobotYaw));
+            //RobotYaw = RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+            //double DeltaX = (RightEncoder.getCurrentPosition() * Math.cos(Math.PI/4 + RobotYaw)) - (LeftEncoder.getCurrentPosition() * Math.cos(Math.PI/4 - RobotYaw));
+            //double DeltaY = (RightEncoder.getCurrentPosition() * Math.sin(Math.PI/4 + RobotYaw)) + (LeftEncoder.getCurrentPosition() * Math.sin(Math.PI/4 - RobotYaw));
 
-            SetVector(CurrentPosition, CurrentPosition.get(0) + (DeltaX * COUNTS_PER_INCH), CurrentPosition.get(1) + (DeltaY * COUNTS_PER_INCH), RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
+            //SetVector(CurrentPosition, CurrentPosition.get(0) + (DeltaX * COUNTS_PER_INCH), CurrentPosition.get(1) + (DeltaY * COUNTS_PER_INCH), RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
             RightEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             LeftEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             RightEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
