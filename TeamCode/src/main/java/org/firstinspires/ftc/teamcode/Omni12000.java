@@ -36,8 +36,12 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.robotcore.external.Func;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+
+import java.lang.reflect.Field;
 
 //import org.firstinspires.ftc.robotcontroller.external.samples.RobotHardware;
 
@@ -51,8 +55,16 @@ public class Omni12000 extends LinearOpMode {
     private DcMotor RightFront = null;
     private DcMotor RightBack = null;
     private Robot12000 Functions = null;
+    private boolean FlippedDrive = false;
+
+    //private boolean ArmMode = false;
+    private double armSpeed = 1;
+    private boolean toggleReady = true;
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
+    private double RobotStartAngle = 0;
+    private double CurrentRobotAngle = 0;
+    private IMU Imu = null;
 
 
     //Motors F = Front B = Back
@@ -62,9 +74,11 @@ public class Omni12000 extends LinearOpMode {
     @Override
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
+        Imu = hardwareMap.get(IMU.class, "imu");
         telemetry.update();
         Functions = new Robot12000(this);
         Functions.init();
+        RobotStartAngle = Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -73,16 +87,60 @@ public class Omni12000 extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
        while (opModeIsActive()) {
            double max;
-
+           CurrentRobotAngle = RobotStartAngle - Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
            // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-           double axial   = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
+           double axial   =  -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value --
            double lateral =  gamepad1.left_stick_x;
            double yaw     =  gamepad1.right_stick_x;
+
+           double FieldAngle = 0;
+           telemetry.addData("yaw", yaw);
+           double Speed = Math.sqrt(Math.pow(axial, 2) + Math.pow(lateral, 2));
+           if(Speed != 0)
+           {
+               FieldAngle = Math.atan(lateral/axial);
+           }
+
+           // double FieldAngle = Math.atan(axial/lateral);
+
+
+
+           //if(lateral == 0)
+           //{
+           //    FieldAngle = 0;
+           //}
+
+           if(axial < 0){
+               FieldAngle += Math.PI;
+           }
+
+           if (360*FieldAngle/(2 * Math.PI) == 90)
+           {
+               FieldAngle = (270 * 2 * Math.PI) / 360;
+           }
+
+           if (360*FieldAngle/(2 * Math.PI) == -90)
+           {
+               FieldAngle = (90 * 2 * Math.PI) / 360;
+           }
+
+           if (360*FieldAngle/(2 * Math.PI) < 0)
+           {
+               double temp = 360 + 360*FieldAngle/(2 * Math.PI);
+               FieldAngle = (temp * 2 * Math.PI) / 360;
+               //FieldAngle = 360 + FieldAngle;
+           }
             //Odom wheels 47 mm or 1 + 7/8
-           double leftFrontPower  = axial + lateral + yaw;
-           double rightFrontPower = axial - lateral - yaw;
-           double leftBackPower   = axial - lateral + yaw;
-           double rightBackPower  = axial + lateral - yaw;
+
+           telemetry.addData("Angle", 360*FieldAngle/(2 * Math.PI));
+
+           double RobotAngle = FieldAngle - CurrentRobotAngle + Math.PI;
+           double leftFrontPower = (((Math.sin(RobotAngle) + Math.cos(RobotAngle)) * Speed) - yaw); //LF
+           double rightFrontPower = (((Math.sin(RobotAngle) - Math.cos(RobotAngle)) * Speed) - yaw); //RF
+           double leftBackPower = (((-Math.sin(RobotAngle) + Math.cos(RobotAngle)) * Speed) - yaw); //LB
+           double rightBackPower = (((-Math.sin(RobotAngle) - Math.cos(RobotAngle)) * Speed) - yaw); //RB
+
+
 
            // Normalize the values so no wheel power exceeds 100%
            // This ensures that the robot maintains the desired motion.
@@ -100,7 +158,78 @@ public class Omni12000 extends LinearOpMode {
            Functions.Move(leftFrontPower, rightFrontPower, leftBackPower, rightBackPower);
 
 
+
+
+           if(gamepad1.left_bumper)
+           {
+               Functions.Arm(-1);
+           }else if(gamepad1.right_bumper)
+           {
+               Functions.Arm(1);
+           }else {
+               Functions.Arm(0);
+           }
+
+           //Flip Drive-Direction
+
+
+           //ARM MODE
+
+
+           if(!gamepad1.x && !gamepad1.left_stick_button)
+           {
+               toggleReady = true;
+           }
+
+           /*if(gamepad1.y && toggleReady)
+           {
+               toggleReady = false;
+               if(armSpeed == 1) {
+                   armSpeed = 0.1;
+               }else {
+                   armSpeed = 1;
+               }
+           }*/
+
+           /*if(gamepad1.x && toggleReady)
+           {
+               toggleReady = false;
+               if(FlippedDrive = false)
+               {
+                   FlippedDrive = true;
+               }
+               else if (FlippedDrive)
+               {
+                   FlippedDrive = false;
+               }
+           }*/
+           if(gamepad1.a)
+           {
+               Functions.Drone(1);
+           }
+
+           if(gamepad1.right_trigger > 0)
+           {
+               Functions.Intake(-gamepad1.right_trigger - 0.25);
+           }else if(gamepad1.left_trigger > 0)
+           {
+               Functions.Intake(gamepad1.left_trigger/2);
+           }
+           else {
+               if(axial < 0)
+               {
+                   //Functions.Intake(-0.55);
+               }
+               else {
+
+               }
+               Functions.Intake(0);
+
+           }
+
            // Show the elapsed game time and wheel power.
+            //telemetry.addData("ArmSpeed", armSpeed);
+            telemetry.addData("Flipped", FlippedDrive);
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             //telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
             telemetry.update();

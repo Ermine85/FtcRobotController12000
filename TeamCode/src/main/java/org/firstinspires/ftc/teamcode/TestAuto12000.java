@@ -94,7 +94,7 @@ public class TestAuto12000 extends LinearOpMode {
         waitForStart();
         //Test Move
         //Stick.setPosition(1);
-        MoveTo(18, 18, 0, 3,3,0.2);
+        MoveTo(18, 18, 0, 5,3,0.4);
         sleep(1000);
 
 
@@ -150,14 +150,14 @@ public class TestAuto12000 extends LinearOpMode {
         LeftEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         double Crx = 0;
         double Cry = 0;
-        double Cfx = 0;
-        double Cfy = 0;
+        double Cfx = InitialPosition.get(0);
+        double Cfy = InitialPosition.get(1);
 
         SetVector(CurrentPosition, InitialPosition.get(0), InitialPosition.get(1), InitialPosition.get(2));
 
         //Find distance from target
-        //double RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
-        double RB = 5;
+        double RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
+        //double RB = 5;
 
         while(RB > PositionTolerance)
         {
@@ -210,10 +210,14 @@ public class TestAuto12000 extends LinearOpMode {
             double Ttf = Math.atan(DeltaX/DeltaY);
             if(DeltaY == 0 && DeltaX >= 0)
             {
-                Ttf = 0;
+                Ttf = Math.PI/4;
             }else if(DeltaY == 0 && DeltaX < 0)
             {
-                Ttf = Math.PI;
+                Ttf = 5* Math.PI/4;
+            }
+            if(DeltaX < 0)
+            {
+                Ttf = Ttf + Math.PI;
             }
 
             telemetry.addData("Robot X",Crx);
@@ -227,8 +231,9 @@ public class TestAuto12000 extends LinearOpMode {
             telemetry.addData("robot imu", RobotYaw*360/(2*Math.PI));
             telemetry.update();
 
+            RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
 
-            double RobotAngle = - Ttf + RobotYaw + Math.PI;
+            double RobotAngle =  Ttf - RobotYaw + Math.PI;
             //Motor Speed
             double M1 = (Math.sin(RobotAngle) + Math.cos(RobotAngle)); //LF
             double M2 = (Math.sin(RobotAngle) - Math.cos(RobotAngle)); //RF
@@ -253,6 +258,9 @@ public class TestAuto12000 extends LinearOpMode {
             LeftBack.setPower(M3 * Speed);
             RightBack.setPower(M4 * Speed);
 
+            RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
+
+
             //RobotYaw = RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
             //double DeltaX = (RightEncoder.getCurrentPosition() * Math.cos(Math.PI/4 + RobotYaw)) - (LeftEncoder.getCurrentPosition() * Math.cos(Math.PI/4 - RobotYaw));
             //double DeltaY = (RightEncoder.getCurrentPosition() * Math.sin(Math.PI/4 + RobotYaw)) + (LeftEncoder.getCurrentPosition() * Math.sin(Math.PI/4 - RobotYaw));
@@ -263,7 +271,11 @@ public class TestAuto12000 extends LinearOpMode {
             RightEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             LeftEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
-        SetVector(InitialPosition, CurrentPosition.get(0), CurrentPosition.get(1), CurrentPosition.get(2));
+        SetVector(InitialPosition, Cfx, Cfy, CurrentPosition.get(2));
+        LeftFront.setPower(0);
+        LeftBack.setPower(0);
+        RightBack.setPower(0);
+        RightFront.setPower(0);
     }
 
     public void SetVector(Vector vector, double X, double Y, double angle )
