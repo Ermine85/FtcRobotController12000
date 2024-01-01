@@ -93,8 +93,8 @@ public class TestAuto12000 extends LinearOpMode {
         StartVector(CurrentPosition, 0, 0,10);  // ^
         waitForStart();
         //Test Move
-        //Stick.setPosition(1);
-        MoveTo(18, 18, 0, 5,3,0.4);
+        // Move to used inches in x and y direction with respect to front of robot
+        MoveTo(18, 18, 0, 5,3,0.4);  // This MoveTo goes diagonally 18 inches forward and 18 inches to the right
         sleep(1000);
 
 
@@ -156,46 +156,45 @@ public class TestAuto12000 extends LinearOpMode {
         SetVector(CurrentPosition, InitialPosition.get(0), InitialPosition.get(1), InitialPosition.get(2));
 
         //Find distance from target
-        double RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
+
+        double R = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2 ) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
         //double RB = 5;
 
-        while(RB > PositionTolerance)
-        {
+        while(R > PositionTolerance) {
             //RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
             //double AngleDelta = Math.atan((TargetX - CurrentPosition.get(0))/(TargetY - CurrentPosition.get(1)));
             double RobotYaw = StartAngle - RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
 
             //Calculate robot distance and direction on robot frame of reference
-            double D1 = COUNTS_PER_INCH*Math.sqrt(Math.pow(LeftEncoder.getCurrentPosition(),2)+ Math.pow(RightEncoder.getCurrentPosition(),2));
+            double D1 = COUNTS_PER_INCH * Math.sqrt(Math.pow(LeftEncoder.getCurrentPosition(), 2) + Math.pow(RightEncoder.getCurrentPosition(), 2));
             double alpha = LeftEncoder.getCurrentPosition();
             double beta = RightEncoder.getCurrentPosition();
 
-            double Theta1 = Math.atan(beta/alpha)-Math.PI/4.0;
+            double Theta1 = Math.atan(beta / alpha) - (Math.PI / 4.0);
+            telemetry.addData("Raw Robot Theta",Theta1);
 
-            if(alpha == 0 && beta >= 0)
-            {
-                Theta1 = Math.PI/4;
-            }else if(alpha == 0 && beta < 0)
-            {
-                Theta1 = 5*Math.PI/4;
+
+            if (alpha == 0 && beta >= 0) {
+                Theta1 = Math.PI / 4;
+            } else if (alpha == 0 && beta < 0) {
+                Theta1 = 5 * Math.PI / 4;
             }
 
             //Account for issue with arctan since it only returns 0-PI
-            if(alpha < 0)
-            {
+            if (alpha < 0) {
                 Theta1 = Theta1 + Math.PI;
             }
             //Calculate Robot frame of reference X and Y distance moved
-            double Drx = Math.sin(Theta1)*D1;
-            double Dry = Math.cos(Theta1)*D1;
+            double Drx = Math.sin(Theta1) * D1;
+            double Dry = Math.cos(Theta1) * D1;
 
             //Convert distance and direction from robot frame of reference to field frame of reference
             //Angle of robot in field reference
-            double ThetaF = Theta1 + RobotYaw;
+            double ThetaF = Theta1 + RobotYaw;  // Remove RobotYaw for now
             //Distance robot has moved in x-direction
-            double Dfx = Math.sin(ThetaF)*D1;
+            double Dfx = Math.sin(ThetaF) * D1;
             //Distance robot has moved in y-direction
-            double Dfy = Math.cos(ThetaF)*D1;
+            double Dfy = Math.cos(ThetaF) * D1;
 
             //track current position
             Crx = Crx + Drx;
@@ -203,23 +202,26 @@ public class TestAuto12000 extends LinearOpMode {
             Cfx = Cfx + Dfx;
             Cfy = Cfy + Dfy;
 
-            double DeltaX = TargetX - Cfx;
-            double DeltaY = TargetY - Cfy;
+            //Calculate distance X and Y from target - negative to flip the coordinate system
+            double DeltaX = (TargetX - Cfx);
+            double DeltaY = (TargetY - Cfy);
 
-            double R = Math.sqrt(Math.pow(DeltaX, 2) + Math.pow(DeltaY, 2));
-            double Ttf = Math.atan(DeltaX/DeltaY);
-            if(DeltaY == 0 && DeltaX >= 0)
-            {
-                Ttf = Math.PI/4;
-            }else if(DeltaY == 0 && DeltaX < 0)
-            {
-                Ttf = 5* Math.PI/4;
-            }
-            if(DeltaX < 0)
-            {
+            //calculate distance from target
+            R = Math.sqrt(Math.pow(DeltaX, 2) + Math.pow(DeltaY, 2));
+            //Calculate direction to target
+            if (DeltaY == 0)  DeltaY = 0.001;
+            double Ttf = Math.atan(DeltaX / DeltaY);
+            if (DeltaY < 0) {
                 Ttf = Ttf + Math.PI;
             }
+            if (DeltaY > 0){
+                //Do nothing
+            }
 
+            Ttf = Ttf + Math.PI;
+
+            telemetry.addData("Robot TargetX",TargetX);
+            telemetry.addData("Robot TargetY",TargetY);
             telemetry.addData("Robot X",Crx);
             telemetry.addData("Robot Y",Cry);
             telemetry.addData("Field X",Cfx);
@@ -227,13 +229,13 @@ public class TestAuto12000 extends LinearOpMode {
             telemetry.addData("Robot Theta",Theta1);
             telemetry.addData("Field Theta",ThetaF);
             telemetry.addData("target direction",Ttf*360/(2*Math.PI));
-            telemetry.addData("target radius", R);
+            telemetry.addData("Target Radius: ", R);
             telemetry.addData("robot imu", RobotYaw*360/(2*Math.PI));
             telemetry.update();
 
-            RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
+            //RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
 
-            double RobotAngle =  Ttf - RobotYaw + Math.PI;
+            double RobotAngle =  Ttf - RobotYaw;
             //Motor Speed
             double M1 = (Math.sin(RobotAngle) + Math.cos(RobotAngle)); //LF
             double M2 = (Math.sin(RobotAngle) - Math.cos(RobotAngle)); //RF
@@ -258,7 +260,7 @@ public class TestAuto12000 extends LinearOpMode {
             LeftBack.setPower(M3 * Speed);
             RightBack.setPower(M4 * Speed);
 
-            RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
+           // RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
 
 
             //RobotYaw = RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);

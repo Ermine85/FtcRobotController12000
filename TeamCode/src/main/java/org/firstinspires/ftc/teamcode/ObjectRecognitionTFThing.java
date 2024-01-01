@@ -57,13 +57,13 @@ public class ObjectRecognitionTFThing extends LinearOpMode {
 
     // TFOD_MODEL_ASSET points to a model file stored in the project Asset location,
     // this is only used for Android Studio when using models in Assets.
-    private static final String TFOD_MODEL_ASSET = "MyModelStoredAsAsset.tflite";
+    private static final String TFOD_MODEL_ASSET = "12000RedBaseModel.tflite";
     // TFOD_MODEL_FILE points to a model file stored onboard the Robot Controller's storage,
     // this is used when uploading models directly to the RC using the model upload interface.
-    private static final String TFOD_MODEL_FILE = "/sdcard/FIRST/tflitemodels/myCustomModel.tflite";
+    private static final String TFOD_MODEL_FILE = "/sdcard/FIRST/tflitemodels/12000RedBaseModel.tflite";
     // Define the labels recognized in the model for TFOD (must be in training order!)
     private static final String[] LABELS = {
-       "Prop",
+       "REDdiabolo",
     };
 
     private ElapsedTime   runtime = new ElapsedTime();
@@ -92,17 +92,20 @@ public class ObjectRecognitionTFThing extends LinearOpMode {
 
         if (opModeIsActive()) {
 
-                FindProp();
+            // Put navigation code here based on result = 0, 1, or 2
+            int result = FindProp();
+            if (result == 0) {
+
+            }
+
 
                 // Push telemetry to the Driver Station.
                 telemetry.update();
 
                 // Save CPU resources; can resume streaming when needed.
-                if (gamepad1.dpad_down) {
-                    visionPortal.stopStreaming();
-                } else if (gamepad1.dpad_up) {
-                    visionPortal.resumeStreaming();
-                }
+
+            visionPortal.stopStreaming();
+
 
                 // Share the CPU.
                 sleep(20);
@@ -216,14 +219,20 @@ public class ObjectRecognitionTFThing extends LinearOpMode {
             position = 2;
         }
         else {
-            if (x <=250) {
-                position = 0;
+            if (x <=500) {
+                position = 2;
             }
             else {
-                position = 1;
+                if (x<=150 && x>475) {
+                    position = 1;
+                }
+                else {
+                    position = 0;
+                }
             }
         }
         return(position);
     }   // end method telemetryTfod()
 
 }   // end class
+// around the world x100000, 14000000 BPM is the craziest of all crazies
