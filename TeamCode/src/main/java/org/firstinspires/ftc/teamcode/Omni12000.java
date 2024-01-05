@@ -38,6 +38,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.hardware.IMU;
 
+import org.checkerframework.checker.units.qual.Angle;
 import org.firstinspires.ftc.robotcore.external.Func;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
@@ -208,23 +209,15 @@ public class Omni12000 extends LinearOpMode {
                Functions.Drone(1);
            }
 
-           if(gamepad1.right_trigger > 0)
-           {
-               Functions.Intake(-gamepad1.right_trigger - 0.25);
-           }else if(gamepad1.left_trigger > 0)
-           {
-               Functions.Intake(gamepad1.left_trigger/2);
-           }
-           else {
-               if(axial < 0)
-               {
-                   //Functions.Intake(-0.55);
-               }
-               else {
 
-               }
-               Functions.Intake(0);
+           Functions.Intake(gamepad1.left_trigger - gamepad1.right_trigger);
+           //Functions.Intake(gamepad1.left_trigger);
 
+
+
+           if(gamepad1.left_stick_button) // Camera Pointing Away
+           {
+               RobotStartAngle = Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
            }
 
            // Show the elapsed game time and wheel power.

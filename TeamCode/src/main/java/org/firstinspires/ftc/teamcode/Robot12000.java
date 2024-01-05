@@ -17,6 +17,8 @@ public class Robot12000 {
     private DcMotor RightFront = null; //right_front
     private DcMotor LeftBack = null; //left_back
     private DcMotor RightBack = null; //right_back
+    private Servo IntakeLift = null; //intake_lift
+
     private DcMotor Intake = null;
     private DcMotor Arm = null;
     private Servo Drone = null;
@@ -37,6 +39,7 @@ public class Robot12000 {
         LeftBack = OpMode.hardwareMap.get(DcMotor.class, "left_back");
         RightBack = OpMode.hardwareMap.get(DcMotor.class, "right_back");
         Intake = OpMode.hardwareMap.get(DcMotor.class, "intake");
+        IntakeLift = OpMode.hardwareMap.get(Servo.class, "intake_lift");
         Arm = OpMode.hardwareMap.get(DcMotor.class, "arm");
         Drone = OpMode.hardwareMap.get(Servo.class, "drone");
         RobotIMU = OpMode.hardwareMap.get(IMU.class, "imu");
@@ -99,6 +102,15 @@ public class Robot12000 {
 
     public void Intake(double power)
     {
+
+        if(power != 0){
+            IntakeLift.setPosition(0.35);
+            Intake.setPower(power);
+        } else
+        {
+            IntakeLift.setPosition(0.5);
+            //Intake.setPower(0.25);
+        }
         Intake.setPower(power);
     }
 

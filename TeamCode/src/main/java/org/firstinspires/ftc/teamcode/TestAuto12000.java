@@ -35,8 +35,10 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.configuration.annotations.ServoType;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.IMU;
@@ -49,7 +51,7 @@ import java.util.Vector;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
-
+import org.firstinspires.ftc.robotcore.internal.ui.ThemedActivity;
 
 
 @Autonomous(name="12000", group="Robot")
@@ -62,6 +64,7 @@ public class TestAuto12000 extends LinearOpMode {
     private DcMotor RightBack = null;
     private DcMotor RightEncoder = null;
     private DcMotor LeftEncoder = null;
+    private CRServo PixelServo = null;
 
     private Vector<Double> InitialPosition = new Vector<Double>(3);
     private Vector<Double> CurrentPosition = new Vector<Double>(3);
@@ -71,7 +74,7 @@ public class TestAuto12000 extends LinearOpMode {
 
     //Robot12000 RobotFunctions = new Robot12000(this);
     //New wheel diameter of 12 cm
-    private double COUNTS_PER_INCH  = (((2 * Math.PI * 2) / 8192) * 2.54 * 18) / 70 ; // 2pi * wheel radios / encoder tpr
+    private double COUNTS_PER_INCH  = (((((2.0 * Math.PI * 2.0) / 8192.0) * 2.54 * 18.0) / 70.0) / 18.0 * 28.0) ; // 2pi * wheel radios / encoder tpr
     @Override
     public void runOpMode() {
 
@@ -81,6 +84,7 @@ public class TestAuto12000 extends LinearOpMode {
         RightBack = hardwareMap.get(DcMotor.class, "right_back");
         RightEncoder = hardwareMap.get(DcMotor.class, "right_odom");
         LeftEncoder = hardwareMap.get(DcMotor.class, "left_odom");
+        PixelServo = hardwareMap.get(CRServo.class, "pixel_servo");
 
         RobotIMU = hardwareMap.get(IMU.class, "imu");
 
@@ -94,7 +98,14 @@ public class TestAuto12000 extends LinearOpMode {
         waitForStart();
         //Test Move
         // Move to used inches in x and y direction with respect to front of robot
-        MoveTo(18, 18, 0, 5,3,0.4);  // This MoveTo goes diagonally 18 inches forward and 18 inches to the right
+        MoveTo(10, 23, 10, 1,15,0.4);  // This MoveTo goes diagonally 18 inches forward and 18 inches to the right
+        sleep(2000);
+        MoveTo(5, 18, 180, 1,15,0.4);
+        sleep(2000);
+        MoveTo(0,0,90,2,15,0.4);
+        //MoveTo(10, 40, 45, 1,5, 0.4 );
+        //MoveTo(0, 0, 0, 1,5,0.4);  // This MoveTo goes diagonally 18 inches forward and 18 inches to the right
+
         sleep(1000);
 
 
@@ -144,6 +155,8 @@ public class TestAuto12000 extends LinearOpMode {
 
     public void MoveTo(double TargetX, double TargetY, double TargetAngle, double PositionTolerance, double AngleTolerance, double Speed)
     {
+        TargetAngle = (TargetAngle * (2 * Math.PI) / 360);
+        AngleTolerance = AngleTolerance * (2 * Math.PI) / 360;
         RightEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         LeftEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         RightEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -152,18 +165,20 @@ public class TestAuto12000 extends LinearOpMode {
         double Cry = 0;
         double Cfx = InitialPosition.get(0);
         double Cfy = InitialPosition.get(1);
+        double RobotYaw = StartAngle - RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
 
         SetVector(CurrentPosition, InitialPosition.get(0), InitialPosition.get(1), InitialPosition.get(2));
 
         //Find distance from target
 
+        double ThetaF = InitialPosition.get(2);
         double R = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2 ) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
         //double RB = 5;
 
-        while(R > PositionTolerance) {
+        while(R > PositionTolerance || Math.abs(TargetAngle - ThetaF) > AngleTolerance ){
             //RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
             //double AngleDelta = Math.atan((TargetX - CurrentPosition.get(0))/(TargetY - CurrentPosition.get(1)));
-            double RobotYaw = StartAngle - RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+            RobotYaw = StartAngle - RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
 
             //Calculate robot distance and direction on robot frame of reference
             double D1 = COUNTS_PER_INCH * Math.sqrt(Math.pow(LeftEncoder.getCurrentPosition(), 2) + Math.pow(RightEncoder.getCurrentPosition(), 2));
@@ -190,7 +205,7 @@ public class TestAuto12000 extends LinearOpMode {
 
             //Convert distance and direction from robot frame of reference to field frame of reference
             //Angle of robot in field reference
-            double ThetaF = Theta1 + RobotYaw;  // Remove RobotYaw for now
+            ThetaF = Theta1 + RobotYaw;  // Remove RobotYaw for now
             //Distance robot has moved in x-direction
             double Dfx = Math.sin(ThetaF) * D1;
             //Distance robot has moved in y-direction
@@ -222,12 +237,16 @@ public class TestAuto12000 extends LinearOpMode {
 
             telemetry.addData("Robot TargetX",TargetX);
             telemetry.addData("Robot TargetY",TargetY);
+            telemetry.addLine();
             telemetry.addData("Robot X",Crx);
             telemetry.addData("Robot Y",Cry);
+            telemetry.addLine();
             telemetry.addData("Field X",Cfx);
             telemetry.addData("Field Y",Cfy);
+            telemetry.addLine();
             telemetry.addData("Robot Theta",Theta1);
             telemetry.addData("Field Theta",ThetaF);
+            telemetry.addLine();
             telemetry.addData("target direction",Ttf*360/(2*Math.PI));
             telemetry.addData("Target Radius: ", R);
             telemetry.addData("robot imu", RobotYaw*360/(2*Math.PI));
@@ -237,10 +256,10 @@ public class TestAuto12000 extends LinearOpMode {
 
             double RobotAngle =  Ttf - RobotYaw;
             //Motor Speed
-            double M1 = (Math.sin(RobotAngle) + Math.cos(RobotAngle)); //LF
-            double M2 = (Math.sin(RobotAngle) - Math.cos(RobotAngle)); //RF
-            double M3 = (-Math.sin(RobotAngle) + Math.cos(RobotAngle)); //LB
-            double M4 = (-Math.sin(RobotAngle) - Math.cos(RobotAngle)); //RB
+            double M1 = (Math.sin(RobotAngle) + Math.cos(RobotAngle)) + 0.2*(-ThetaF + TargetAngle); //LF
+            double M2 = (Math.sin(RobotAngle) - Math.cos(RobotAngle)) + 0.2*(-ThetaF + TargetAngle); //RF
+            double M3 = (-Math.sin(RobotAngle) + Math.cos(RobotAngle)) + 0.2*(-ThetaF + TargetAngle); //LB
+            double M4 = (-Math.sin(RobotAngle) - Math.cos(RobotAngle)) + 0.2*(-ThetaF + TargetAngle); //RB
             double Mmax;
 
             Mmax = Math.max(M1, M2);
@@ -272,8 +291,9 @@ public class TestAuto12000 extends LinearOpMode {
             LeftEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             RightEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             LeftEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            //ThetaF = (ThetaF * 360) / (2 * Math.PI);
         }
-        SetVector(InitialPosition, Cfx, Cfy, CurrentPosition.get(2));
+        SetVector(InitialPosition, Cfx, Cfy, ThetaF);
         LeftFront.setPower(0);
         LeftBack.setPower(0);
         RightBack.setPower(0);
@@ -291,6 +311,15 @@ public class TestAuto12000 extends LinearOpMode {
         vector.add(X);
         vector.add(Y);
         vector.add(angle);
+    }
+
+    public void PlacePixel(int time, double speed)
+    {
+        PixelServo.setPower(speed);
+        sleep(time);
+        PixelServo.setPower(-speed);
+        sleep(time);
+        PixelServo.setPower(0);
     }
 
 
