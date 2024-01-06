@@ -96,7 +96,7 @@ public class TestAuto12000 extends LinearOpMode {
         StartVector(InitialPosition, 0, 0, 10); // might want to be SetVector
         StartVector(CurrentPosition, 0, 0,10);  // ^
         waitForStart();
-        //Red Audience side
+        //Red Audience side code
         // Move to used inches in x and y direction with respect to front of robot
         MoveTo(-10, 23, 0, .1,5,0.4);  // Place pixel on left strike mark
         sleep(2000);
