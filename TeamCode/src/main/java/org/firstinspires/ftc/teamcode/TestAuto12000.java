@@ -96,15 +96,15 @@ public class TestAuto12000 extends LinearOpMode {
         StartVector(InitialPosition, 0, 0, 10); // might want to be SetVector
         StartVector(CurrentPosition, 0, 0,10);  // ^
         waitForStart();
-        //Test Move
+        //Red Audience side
         // Move to used inches in x and y direction with respect to front of robot
-        MoveTo(-6, 23, 10, 1,3,0.4);  // This MoveTo goes diagonally 18 inches forward and 18 inches to the right
+        MoveTo(-10, 23, 0, .1,5,0.4);  // Place pixel on left strike mark
         sleep(2000);
-        //MoveTo(5, 18, 0, 1,15,0.4);
-        sleep(2000);
-        MoveTo(0,15, 0,2,10,0.4);
+        MoveTo(0, 0, 90, 1,5,0.5);
+        //sleep(2000);
+        //MoveTo(0,15, 0,2,10,0.4);
 
-        MoveTo(-43,0, 0, 2,3,0.4);
+       // MoveTo(-43,0, 0, 2,3,0.4);
         //MoveTo(10, 40, 45, 1,5, 0.4 );
         //MoveTo(0, 0, 0, 1,5,0.4);  // This MoveTo goes diagonally 18 inches forward and 18 inches to the right
 
@@ -175,9 +175,10 @@ public class TestAuto12000 extends LinearOpMode {
 
         double ThetaF = RobotYaw;
         double R = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2 ) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
+        double J = Math.abs(TargetAngle-RobotYaw); //calculating the difference to angle from target
         //double RB = 5;
 
-        while(R > PositionTolerance || Math.abs(TargetAngle - RobotYaw) > AngleTolerance ){
+        while(R > PositionTolerance || J > AngleTolerance ){
             //RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
             //double AngleDelta = Math.atan((TargetX - CurrentPosition.get(0))/(TargetY - CurrentPosition.get(1)));
             RobotYaw = StartAngle - RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
@@ -246,7 +247,7 @@ public class TestAuto12000 extends LinearOpMode {
             telemetry.addData("Field X",Cfx);
             telemetry.addData("Field Y",Cfy);
             telemetry.addLine();
-            telemetry.addData("Delta to target angle",TargetAngle-ThetaF);
+            telemetry.addData("Delta to target angle",(TargetAngle-RobotYaw)*180/Math.PI);
             telemetry.addData("Field Theta",ThetaF);
             telemetry.addLine();
             telemetry.addData("target direction",Ttf*360/(2*Math.PI));
@@ -257,20 +258,20 @@ public class TestAuto12000 extends LinearOpMode {
             //RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
 
             double RobotAngle =  Ttf - RobotYaw;
-            double J = Math.abs(TargetAngle-RobotYaw);
+            J = Math.abs(TargetAngle-RobotYaw);
             //Motor Speed
             double F=1; //adding in a proportional scaling factor for distance
-            if (R<3) {
-                F = (R)/3+.2;
+            if (R<3/1.4) {
+                F = (R)/3+.4;
             }
             double U =1; //adding in a proportional scalaing factor for angle
-            if (J<10) {
-                U = U/10+.2;
+            if (J<Math.PI/4/1.2) {
+                U = U/Math.PI/4+0.25;
             }
-            double M1 = F*(Math.sin(RobotAngle) + Math.cos(RobotAngle)) + U*0.5*(-RobotYaw + TargetAngle); //LF
-            double M2 = F*(Math.sin(RobotAngle) - Math.cos(RobotAngle)) + U*0.5*(-RobotYaw + TargetAngle); //RF
-            double M3 = F*(-Math.sin(RobotAngle) + Math.cos(RobotAngle)) + U*0.5*(-RobotYaw + TargetAngle); //LB
-            double M4 = F*(-Math.sin(RobotAngle) - Math.cos(RobotAngle)) + U*0.5*(-RobotYaw + TargetAngle); //RB
+            double M1 = F*(Math.sin(RobotAngle) + Math.cos(RobotAngle)) + U*(RobotYaw - TargetAngle); //LF
+            double M2 = F*(Math.sin(RobotAngle) - Math.cos(RobotAngle)) + U*(RobotYaw - TargetAngle); //RF
+            double M3 = F*(-Math.sin(RobotAngle) + Math.cos(RobotAngle)) + U*(RobotYaw - TargetAngle); //LB
+            double M4 = F*(-Math.sin(RobotAngle) - Math.cos(RobotAngle)) + U*(RobotYaw - TargetAngle); //RB
             double Mmax;
 
             Mmax = Math.max(M1, M2);
