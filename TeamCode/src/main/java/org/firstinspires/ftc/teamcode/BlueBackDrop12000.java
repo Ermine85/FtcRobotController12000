@@ -29,33 +29,19 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import android.view.inputmethod.CorrectionInfo;
-
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.configuration.annotations.ServoType;
-import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.util.Range;
 
-import java.lang.Math;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+
 import java.util.Vector;
 
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
-import org.firstinspires.ftc.robotcore.internal.ui.ThemedActivity;
-
-
-@Autonomous(name="Red-BackDrop", group="Robot")
-public class TestAuto12000 extends LinearOpMode {
+@Autonomous(name="Blue-BackDrop", group="Robot")
+public class BlueBackDrop12000 extends LinearOpMode {
 
     public int newTarget = 0;
     private DcMotor LeftFront = null;
@@ -97,13 +83,13 @@ public class TestAuto12000 extends LinearOpMode {
         StartVector(CurrentPosition, 0, 0,10);  // ^
         waitForStart();
         //Red backdrop side code
-        MoveTo(2,27.5,0,1,5,0.4);
+        MoveTo(-2,27.5,0,1,5,0.4);
         sleep(500);
         MoveTo(0,18,0,1,5,0.4);
-        MoveTo(38.7,22,90,1,5,0.4);
+        MoveTo(-39,26,-90,1,5,0.4);
         sleep(1000); //This is where the servo needs to extend
         PlacePixel(3500,1);
-        MoveTo(38.7,0,100,1,5,0.4);
+        MoveTo(-37,0,-100,1,5,0.4);
 
         //Red Audience side code
         // Move to used inches in x and y direction with respect to front of robot

@@ -29,33 +29,19 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import android.view.inputmethod.CorrectionInfo;
-
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.configuration.annotations.ServoType;
-import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.util.Range;
 
-import java.lang.Math;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+
 import java.util.Vector;
 
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
-import org.firstinspires.ftc.robotcore.internal.ui.ThemedActivity;
-
-
-@Autonomous(name="Red-BackDrop", group="Robot")
-public class TestAuto12000 extends LinearOpMode {
+@Autonomous(name="Blue-Audience", group="Robot")
+public class BlueAudianceAuto12000 extends LinearOpMode {
 
     public int newTarget = 0;
     private DcMotor LeftFront = null;
@@ -97,25 +83,25 @@ public class TestAuto12000 extends LinearOpMode {
         StartVector(CurrentPosition, 0, 0,10);  // ^
         waitForStart();
         //Red backdrop side code
-        MoveTo(2,27.5,0,1,5,0.4);
-        sleep(500);
-        MoveTo(0,18,0,1,5,0.4);
-        MoveTo(38.7,22,90,1,5,0.4);
-        sleep(1000); //This is where the servo needs to extend
-        PlacePixel(3500,1);
-        MoveTo(38.7,0,100,1,5,0.4);
+        //MoveTo(0,27.5,0,1,5,0.4);
+        //sleep(500);
+        //MoveTo(0,18,0,1,5,0.4);
+        //MoveTo(38.7,22,100,1,5,0.4);
+        //sleep(1000); //This is where the servo needs to extend
+        //MoveTo(38.7,0,100,1,5,0.4);
 
         //Red Audience side code
         // Move to used inches in x and y direction with respect to front of robot
-        //MoveTo(-10.7, 20, 0, 1,5,0.4);  // Place pixel on left strike mark
-        //sleep(500); //pause for consistent placement
-        //MoveTo(-10.7,17,0,1,5,0.4); //backup to leave pixel there
-        //MoveTo(0, 0, 90, 1,5,0.4); //backup to transportation route
-        //sleep(500); //pause for consitency
-        //MoveTo(66,-5, 90,1,5,0.4);//Through the truss
-        //MoveTo(93.5,18,100,1,5,0.4); //Moving infront of the backdrop
-        //sleep(1000); //This is where the servo needs to extend
-        //MoveTo(94,-13,100,5,5,0.4); //Parking
+        MoveTo(15.5, 20, 0, 1,5,0.4);  // Place pixel on left strike mark
+        sleep(500); //pause for consistent placement
+        MoveTo(10.7,17,0,1,5,0.4); //backup to leave pixel there
+        MoveTo(0, 4, 90, 1,5,0.4); //backup to transportation route
+        sleep(500); //pause for consitency
+        MoveTo(-66,7, 90,1,5,0.4);//Through the truss
+        MoveTo(-93.5,18,100,1,5,0.4); //Moving infront of the backdrop
+        sleep(1000); //This is where the servo needs to extend
+        PlacePixel(3500, 1);
+        MoveTo(-94,-13,100,5,5,0.4); //Parking
 
 
 
@@ -334,9 +320,9 @@ public class TestAuto12000 extends LinearOpMode {
 
     public void PlacePixel(int time, double speed)
     {
-        PixelServo.setPower(-speed);
-        sleep(time);
         PixelServo.setPower(speed);
+        sleep(time);
+        PixelServo.setPower(-speed);
         sleep(time);
         PixelServo.setPower(0);
     }
