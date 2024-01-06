@@ -64,6 +64,7 @@ public class Omni12000 extends LinearOpMode {
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
     private double RobotStartAngle = 0;
+    private double FieldAngle = 0;
     private double CurrentRobotAngle = 0;
     private IMU Imu = null;
 
@@ -97,10 +98,19 @@ public class Omni12000 extends LinearOpMode {
            double FieldAngle = 0;
            telemetry.addData("yaw", yaw);
            double Speed = Math.sqrt(Math.pow(axial, 2) + Math.pow(lateral, 2));
-           if(Speed != 0)
-           {
-               FieldAngle = Math.atan(lateral/axial);
-           }
+
+           //FieldAngle = Math.atan(lateral/axial);
+            if (axial == 0)  axial = 0.001;
+            FieldAngle = Math.atan(lateral / axial);
+            if (axial < 0) {
+                FieldAngle = FieldAngle + Math.PI;
+            }
+            if (axial > 0){
+                //Do nothing
+            }
+
+            FieldAngle = FieldAngle + Math.PI;
+
 
            // double FieldAngle = Math.atan(axial/lateral);
 
@@ -110,7 +120,7 @@ public class Omni12000 extends LinearOpMode {
            //{
            //    FieldAngle = 0;
            //}
-
+/*
            if(axial < 0){
                FieldAngle += Math.PI;
            }
@@ -132,6 +142,8 @@ public class Omni12000 extends LinearOpMode {
                //FieldAngle = 360 + FieldAngle;
            }
             //Odom wheels 47 mm or 1 + 7/8
+            */
+
 
            telemetry.addData("Angle", 360*FieldAngle/(2 * Math.PI));
 
@@ -210,12 +222,12 @@ public class Omni12000 extends LinearOpMode {
            }
 
 
-           Functions.Intake(gamepad1.left_trigger - gamepad1.right_trigger);
+           Functions.Intake(gamepad1.right_trigger - (gamepad1.left_trigger/3));
            //Functions.Intake(gamepad1.left_trigger);
 
 
 
-           if(gamepad1.left_stick_button) // Camera Pointing Away
+           if(gamepad1.start) // Camera Pointing Away
            {
                RobotStartAngle = Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
            }

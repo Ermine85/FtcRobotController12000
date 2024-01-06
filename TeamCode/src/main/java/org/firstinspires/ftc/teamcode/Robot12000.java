@@ -100,11 +100,11 @@ public class Robot12000 {
         Arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
-    public void Intake(double power)
+    public void Intake(double power) //robot activating intake
     {
 
         if(power != 0){
-            IntakeLift.setPosition(0.35);
+            IntakeLift.setPosition(0.25);
             Intake.setPower(power);
         } else
         {
