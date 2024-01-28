@@ -219,18 +219,22 @@ public class ObjectRecognitionTFThing extends LinearOpMode {
             position = 2;
         }
         else {
-            if (x <=500) {
-                position = 2;
+            if (x >= 300 && x <=550) {
+                position = 1;
             }
             else {
-                if (x<=150 && x>475) {
-                    position = 1;
+                if (x < 300) {
+                    position = 0;
                 }
                 else {
-                    position = 0;
+                    position = 2;
                 }
             }
         }
+
+        telemetry.addData("Position", position);
+        telemetry.update();
+        sleep(5000);
         return(position);
     }   // end method telemetryTfod()
 
