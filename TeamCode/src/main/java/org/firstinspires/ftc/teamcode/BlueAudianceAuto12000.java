@@ -34,7 +34,9 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.robot.Robot;
 
+import org.checkerframework.checker.units.qual.Angle;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 import java.util.Vector;
@@ -51,6 +53,9 @@ public class BlueAudianceAuto12000 extends LinearOpMode {
     private DcMotor RightEncoder = null;
     private DcMotor LeftEncoder = null;
     private CRServo PixelServo = null;
+
+    private double TotalEncoderA = 0;
+    private double TotalEncoderB = 0;
 
     private Vector<Double> InitialPosition = new Vector<Double>(3);
     private Vector<Double> CurrentPosition = new Vector<Double>(3);
@@ -78,10 +83,27 @@ public class BlueAudianceAuto12000 extends LinearOpMode {
         LeftBack.setDirection(DcMotor.Direction.FORWARD);
         RightFront.setDirection(DcMotor.Direction.FORWARD);
         RightBack.setDirection(DcMotor.Direction.FORWARD);
-        StartAngle = RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+        StartAngle = RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS); //CHANGE
         StartVector(InitialPosition, 0, 0, 10); // might want to be SetVector
         StartVector(CurrentPosition, 0, 0,10);  // ^
         waitForStart();
+        LeftEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        RightEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        LeftEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        RightEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //MoveTo(0, 0, 90,0,5,0.4);
+        /*while(true)
+        {
+
+            telemetry.addData("True Angle,", RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
+            telemetry.addData("Angle",RobotYAW * 360 / (2 * Math.PI) );
+            telemetry.update();
+        }*/
+
+
+
+
+         //MoveTo(18, 18, 179, 1, 5,0.4);
         //Red backdrop side code
         //MoveTo(0,27.5,0,1,5,0.4);
         //sleep(500);
@@ -91,17 +113,22 @@ public class BlueAudianceAuto12000 extends LinearOpMode {
         //MoveTo(38.7,0,100,1,5,0.4);
 
         //Red Audience side code
-        // Move to used inches in x and y direction with respect to front of robot
-        MoveTo(15.5, 20, 0, 1,5,0.4);  // Place pixel on left strike mark
+        // Move to used inches in x and y direction with respect to front of robot //15.5, 20.1
+
+        /*
+        MoveTo(2, 27.5, 0, 1,5,0.4);  // Place pixel on left strike mark
         sleep(500); //pause for consistent placement
         MoveTo(10.7,17,0,1,5,0.4); //backup to leave pixel there
-        MoveTo(0, 4, 90, 1,5,0.4); //backup to transportation route
+        MoveTo(0, 4, 0, 1,5,0.4); //backup to transportation route
         sleep(500); //pause for consitency
-        MoveTo(-66,7, 90,1,5,0.4);//Through the truss
-        MoveTo(-93.5,18,100,1,5,0.4); //Moving infront of the backdrop
-        sleep(1000); //This is where the servo needs to extend
-        PlacePixel(3500, 1);
-        MoveTo(-94,-13,100,5,5,0.4); //Parking
+
+
+         */
+        //MoveTo(-66,7, 90,1,5,0.4);//Through the truss
+        //MoveTo(-93.5,18,100,1,5,0.4); //Moving infront of the backdrop
+        //sleep(1000); //This is where the servo needs to extend
+        //PlacePixel(3500, 1);
+        //MoveTo(-94,-13,100,5,5,0.4); //Parking
 
 
 
@@ -143,9 +170,9 @@ public class BlueAudianceAuto12000 extends LinearOpMode {
         RightFront.setPower(P2speed);
         LeftBack.setPower(P2speed);
         RightBack.setPower(P1speed);
-        telemetry.addData("MotorSpeed", "Pair1 " + P1speed);
-        telemetry.addData("MotorSpeed", "Pair2 " + P2speed);
-        telemetry.update();
+        //telemetry.addData("MotorSpeed", "Pair1 " + P1speed);
+        //telemetry.addData("MotorSpeed", "Pair2 " + P2speed);
+        //telemetry.update();
     }
 
     public void MoveTo(double TargetX, double TargetY, double TargetAngle, double PositionTolerance, double AngleTolerance, double Speed)
@@ -160,12 +187,12 @@ public class BlueAudianceAuto12000 extends LinearOpMode {
         double Cry = 0; //set robot y position to 0
         double Cfx = InitialPosition.get(0); //set current field position x to last known position
         double Cfy = InitialPosition.get(1); //set current field position y to last known position
-        double RobotYaw = StartAngle - RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS); //find current robot field orientation in radians
+        double RobotYaw = GetAngle(); //find current robot field orientation in radians
 
         SetVector(CurrentPosition, InitialPosition.get(0), InitialPosition.get(1), RobotYaw);
 
         //Find distance from target
-
+        double PreviousYaw = GetAngle();
         double ThetaF = RobotYaw;
         double R = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2 ) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
         double J = Math.abs(TargetAngle-RobotYaw); //calculating the difference to angle from target
@@ -174,15 +201,38 @@ public class BlueAudianceAuto12000 extends LinearOpMode {
         while(R > PositionTolerance || J > AngleTolerance ){
             //RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
             //double AngleDelta = Math.atan((TargetX - CurrentPosition.get(0))/(TargetY - CurrentPosition.get(1)));
-            RobotYaw = StartAngle - RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+            RobotYaw = GetAngle();
 
             //Calculate robot distance and direction on robot frame of reference
+
+            if(RtoD(PreviousYaw) < 90 && RtoD(RobotYaw) > 270)
+            {
+                double AngleChange = DtoR(360) - RobotYaw + PreviousYaw;
+            } else if (RtoD(RobotYaw) < 90 && RtoD(PreviousYaw) > 270)
+            {
+                double AngleChange = PreviousYaw - RobotYaw -DtoR(360);
+            }else {
+                double AngleChange = PreviousYaw - RobotYaw;
+            }
+            
             double D1 = COUNTS_PER_INCH * Math.sqrt(Math.pow(LeftEncoder.getCurrentPosition(), 2) + Math.pow(RightEncoder.getCurrentPosition(), 2));
             double alpha = LeftEncoder.getCurrentPosition();
             double beta = RightEncoder.getCurrentPosition();
+            /*if(alpha > (32 * AngleChange)) //Checks if encoder moved enough (because it might not have)
+            {
+                alpha -= 32 * AngleChange; //Changes encoder number by correction
+            }
+            if(beta < -7.6 * AngleChange)
+            {
+                beta += 7.6 * AngleChange;
+            } */
 
+            //TotalEncoderA += alpha;
+            //TotalEncoderB += beta;
             double Theta1 = Math.atan(beta / alpha) - (Math.PI / 4.0);
             telemetry.addData("Raw Robot Theta",Theta1);
+
+            PreviousYaw = GetAngle();
 
 
             if (alpha == 0 && beta >= 0) {
@@ -246,17 +296,21 @@ public class BlueAudianceAuto12000 extends LinearOpMode {
             telemetry.addData("target direction",Ttf*360/(2*Math.PI));
             telemetry.addData("Target Radius: ", R);
             telemetry.addData("robot imu", RobotYaw*360/(2*Math.PI));
-            telemetry.update();
 
+
+            //telemetry.addData("Total alpha", TotalEncoderA);
+            //telemetry.addData("Total beta", TotalEncoderB);
+            telemetry.update();
             //RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
 
             double RobotAngle =  Ttf - RobotYaw;
             J = Math.abs(TargetAngle-RobotYaw);
+            if(Math.abs(J) >= 4.71)
+            {
+                J -= 2 * Math.PI;
+            }
             //Motor Speed
             double F=1; //adding in a proportional scaling factor for distance
-            if (R<3/1.4) {
-                F = (R)/3+.4;
-            }
             double U =1; //adding in a proportional scalaing factor for angle
             if (J<Math.PI/4/1.2) {
                 U = U/Math.PI/4+0.3;
@@ -325,6 +379,28 @@ public class BlueAudianceAuto12000 extends LinearOpMode {
         PixelServo.setPower(-speed);
         sleep(time);
         PixelServo.setPower(0);
+    }
+    public double GetAngle()
+    {
+        double RobotYAW = StartAngle - RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+        if (360*RobotYAW/(2 * Math.PI) < 0)
+        {
+            double temp = 360 + 360*RobotYAW/(2 * Math.PI);
+            RobotYAW = (temp * 2 * Math.PI) / 360;
+            //FieldAngle = 360 + FieldAngle;
+        }
+        return RobotYAW;
+    }
+
+    public double RtoD(double radians)
+    {
+        double degrees = radians * 360 / (2 * Math.PI);
+        return degrees;
+    }
+    public double DtoR(double degrees)
+    {
+        double radians = degrees * (2 * Math.PI) / 360;
+        return radians;
     }
 
 

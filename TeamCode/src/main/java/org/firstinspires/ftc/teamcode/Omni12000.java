@@ -57,6 +57,7 @@ public class Omni12000 extends LinearOpMode {
     private DcMotor RightBack = null;
     private Robot12000 Functions = null;
     private boolean FlippedDrive = false;
+    private boolean BackUpDrive = false;
 
     //private boolean ArmMode = false;
     private double armSpeed = 1;
@@ -66,6 +67,8 @@ public class Omni12000 extends LinearOpMode {
     private double RobotStartAngle = 0;
     private double FieldAngle = 0;
     private double CurrentRobotAngle = 0;
+
+    private String ArmPosition = "NORMAL"; //DOWN, PLANE, NORMAL
     private IMU Imu = null;
 
 
@@ -94,6 +97,25 @@ public class Omni12000 extends LinearOpMode {
            double axial   =  -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value --
            double lateral =  gamepad1.left_stick_x;
            double yaw     =  gamepad1.right_stick_x;
+
+           double BleftFrontPower  = axial + lateral - yaw ;
+           double BrightFrontPower = -axial + lateral - yaw;
+           double BleftBackPower   = axial - lateral - yaw ;
+           double BrightBackPower  = -axial - lateral - yaw;
+
+           double backUpMax;
+
+           backUpMax = Math.max(Math.abs(BleftFrontPower), Math.abs(BrightFrontPower));
+           backUpMax = Math.max(backUpMax, Math.abs(BleftBackPower));
+           backUpMax = Math.max(backUpMax, Math.abs(BrightBackPower));
+
+           if(backUpMax > 1.0)
+           {
+               BleftFrontPower /= backUpMax;
+               BrightFrontPower /= backUpMax;
+               BleftBackPower /= backUpMax;
+               BrightBackPower /= backUpMax;
+           }
 
            double FieldAngle = 0;
            telemetry.addData("yaw", yaw);
@@ -168,17 +190,22 @@ public class Omni12000 extends LinearOpMode {
                rightBackPower  /= max;
            }
 
-           Functions.Move(leftFrontPower, rightFrontPower, leftBackPower, rightBackPower);
-
+           if(!BackUpDrive)
+           {
+               Functions.Move(leftFrontPower, rightFrontPower, leftBackPower, rightBackPower);
+           } else if(BackUpDrive)
+           {
+               Functions.Move(BleftFrontPower, BrightFrontPower, BleftBackPower, BrightBackPower);
+           }
 
 
 
            if(gamepad1.left_bumper)
            {
-               Functions.Arm(-1);
+               Functions.Arm(1);
            }else if(gamepad1.right_bumper)
            {
-               Functions.Arm(1);
+               Functions.Arm(-1);
            }else {
                Functions.Arm(0);
            }
@@ -204,22 +231,44 @@ public class Omni12000 extends LinearOpMode {
                }
            }*/
 
-           /*if(gamepad1.x && toggleReady)
+           if(gamepad1.x && gamepad1.x)
            {
-               toggleReady = false;
-               if(FlippedDrive = false)
-               {
-                   FlippedDrive = true;
-               }
-               else if (FlippedDrive)
-               {
-                   FlippedDrive = false;
-               }
-           }*/
+               BackUpDrive = true;
+           }
+
+
            if(gamepad1.a)
            {
                Functions.Drone(1);
            }
+
+           if(gamepad1.dpad_down)
+           {
+               Functions.PixelPlacer(1);
+           }
+           if(gamepad1.dpad_up)
+           {
+               Functions.PixelPlacer(-1);
+           }
+
+
+           if(gamepad1.dpad_right)
+           {
+               ArmPosition = "PLANE";
+               Functions.ArmTarget(ArmPosition);
+           }
+           if(gamepad1.dpad_left)
+           {
+               ArmPosition = "DOWN";
+               Functions.ArmTarget(ArmPosition);
+           }
+
+           if(gamepad1.b) //NOT NEEDED
+           {
+               ArmPosition = "NORMAL";
+               Functions.ArmTarget(ArmPosition);
+           }
+
 
 
            Functions.Intake(gamepad1.right_trigger - (gamepad1.left_trigger/3));
@@ -227,14 +276,14 @@ public class Omni12000 extends LinearOpMode {
 
 
 
-           if(gamepad1.start) // Camera Pointing Away
+           if(gamepad1.start && !gamepad1.x) // Camera Pointing Away
            {
                RobotStartAngle = Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
            }
 
            // Show the elapsed game time and wheel power.
             //telemetry.addData("ArmSpeed", armSpeed);
-            telemetry.addData("Flipped", FlippedDrive);
+            telemetry.addData("Back Up", BackUpDrive);
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             //telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
             telemetry.update();

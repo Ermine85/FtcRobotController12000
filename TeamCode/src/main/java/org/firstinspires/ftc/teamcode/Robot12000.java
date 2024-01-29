@@ -4,6 +4,7 @@ import android.graphics.Path;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.Range;
@@ -22,6 +23,7 @@ public class Robot12000 {
     private DcMotor Intake = null;
     private DcMotor Arm = null;
     private Servo Drone = null;
+    private CRServo PixelPlacer = null;
     private boolean FlippedDrive = false;
     private IMU RobotIMU = null;
 
@@ -40,6 +42,7 @@ public class Robot12000 {
         RightBack = OpMode.hardwareMap.get(DcMotor.class, "right_back");
         Intake = OpMode.hardwareMap.get(DcMotor.class, "intake");
         IntakeLift = OpMode.hardwareMap.get(Servo.class, "intake_lift");
+        PixelPlacer = OpMode.hardwareMap.get(CRServo.class, "pixel_servo");
         Arm = OpMode.hardwareMap.get(DcMotor.class, "arm");
         Drone = OpMode.hardwareMap.get(Servo.class, "drone");
         RobotIMU = OpMode.hardwareMap.get(IMU.class, "imu");
@@ -47,7 +50,8 @@ public class Robot12000 {
         LeftBack.setDirection(DcMotor.Direction.FORWARD);
         RightFront.setDirection(DcMotor.Direction.FORWARD);
         RightBack.setDirection(DcMotor.Direction.FORWARD);
-        //Arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        Arm.setDirection(DcMotorSimple.Direction.REVERSE);
+        Arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         Arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
 
@@ -120,4 +124,40 @@ public class Robot12000 {
     }
 
 
+    public void PixelPlacer(double power)
+    {
+        PixelPlacer.setPower(power);
+    }
+
+    public void ArmTarget(String position)
+    {
+        switch(position)
+        {
+            case "DOWN":
+                Arm.setTargetPosition(0);
+                Arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                Arm.setPower(1);
+                while(Arm.isBusy())
+                {
+
+                }
+                Arm.setPower(0);
+                Arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                return;
+            case "PLANE":
+                Arm.setTargetPosition(500);
+                Arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                Arm.setPower(1);
+                while(Arm.isBusy())
+                {
+
+                }
+                Arm.setPower(0);
+                Arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                return;
+            case "NORMAL":
+                Arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        }
+    }
 }
