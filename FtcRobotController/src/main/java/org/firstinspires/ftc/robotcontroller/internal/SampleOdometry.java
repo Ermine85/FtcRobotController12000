@@ -289,13 +289,15 @@ public class SampleOdometry extends LinearOpMode {
             //Motor Speed
 
 
-            double F=1; //adding in a proportional scaling factor for distance
-            if (RadiusToTarget<3/1.4) {
+            double F = 1; //adding in a proportional scaling factor for distance
+            if (RadiusToTarget<3/1.4)
+            {
                 F = (RadiusToTarget)/3+.4;
             }
 
             double U =1; //adding in a proportional scalaing factor for angle
-            if (AngleDifference<Math.PI/4/1.2) {
+            if (AngleDifference<Math.PI/4/1.2)
+            {
                 U = U/Math.PI/4+0.3;
             }
             double M1 = F*(Math.sin(RobotAngle) + Math.cos(RobotAngle)) + 0.5*(RobotYaw - TargetAngle); //LF
