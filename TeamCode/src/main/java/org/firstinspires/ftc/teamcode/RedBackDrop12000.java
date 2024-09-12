@@ -34,6 +34,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 
@@ -75,6 +76,7 @@ public class RedBackDrop12000 extends LinearOpMode {
     private DcMotor LeftBack = null;
     private DcMotor RightFront = null;
     private DcMotor RightBack = null;
+    private TouchSensor PixelTouch = null;
     private DcMotor RightEncoder = null;
     private DcMotor LeftEncoder = null;
     private CRServo PixelServo = null;
@@ -118,7 +120,7 @@ public class RedBackDrop12000 extends LinearOpMode {
         LeftEncoder = hardwareMap.get(DcMotor.class, "left_odom");
         PixelServo = hardwareMap.get(CRServo.class, "pixel_servo");
         colorSensor = hardwareMap.get(ColorSensor.class, "color1");
-
+        PixelTouch = hardwareMap.get(TouchSensor.class, "pixel_touch");
         RobotIMU = hardwareMap.get(IMU.class, "imu");
 
         LeftFront.setDirection(DcMotor.Direction.FORWARD);
@@ -139,22 +141,31 @@ public class RedBackDrop12000 extends LinearOpMode {
             switch(result){
                 case 0: //LEFT
                     MoveTo(5, 20 ,0, 2, 10, 0.4, false);
-                    sleep(500);
-                    MoveTo(3, 28, -45, 2,10,0.4, false);
-                    sleep(500);
+                    sleep(200);
+                    MoveTo(2, 28, -50, 2,10,0.4, false);
+                    sleep(200);
                     MoveTo(7, 20, 0, 2, 10, 0.4, false);
                     //sleep(500);
-                    MoveTo(25, 35, 90, 1,5,0.4, false);
+                    MoveTo(25, 35, 85, 1,5,0.4, false);
                     //sleep(500);
-                    MoveTo(52,34.5, 90, 1,5,0.3, true);
+                    MoveTo(52,37.5, 85, 1,5,0.3, true);
+                    sleep(200);
+                    MoveTo(62, 37.5,85, 1,5,0.3, false);
                     sleep(500);
-                    MoveTo(62, 34.5,90, 1,5,0.3, false);
+                    PlacePixel2();
+                    sleep(200);
+
+                    //Close
+                    MoveTo(50, 0, 90,1,5,0.4,false);
                     sleep(500);
-                    PlacePixel(3800, 1);
-                    sleep(500);
-                    MoveTo(55, -5, 90,1,5,0.5,false);
-                    //sleep(500);
-                    MoveTo(62, -5, 90,1, 5, 0.5, false);
+                    MoveTo(60, 0, 0,1, 5, 0.4, false);
+
+                    //Far
+                    /*
+                    MoveTo(50, 45, 85, 1, 5, 0.3, false);
+                    sleep(200);
+                    MoveTo(60, 45, 85, 1, 5, 0.3, false);
+                    return; */
                     return;
                 case 1: //CENTER
                     MoveTo(5, 5 ,0, 1, 5, 0.4, false);
@@ -163,18 +174,27 @@ public class RedBackDrop12000 extends LinearOpMode {
                     sleep(500);
                     MoveTo(5, 20, 0, 1, 5, 0.4, false);
                     sleep(500);
-                    MoveTo(25, 33, 90, 1,5,0.4, false);
+                    MoveTo(25, 32.5, 90, 1,5,0.4, false);
                     sleep(500);
-                    MoveTo(50,33, 90, 1,5,0.35, true);
+                    MoveTo(50,32.5, 85, 1,5,0.35, true);
                     sleep(500);
-                    MoveTo(58, 33,90, 1,5,0.3, false);
+                    MoveTo(58, 32.5,85, 1,5,0.3, false);
                     sleep(500);
-                    PlacePixel(3800, 1);
+                    PlacePixel2();
                     sleep(500);
+
+
+                    //Close
                     MoveTo(50, 0, 90,1,5,0.4,false);
                     sleep(500);
-                    MoveTo(60, 0, 90,1, 5, 0.4, false);
-                    return;
+                    MoveTo(60, 0, 0,1, 5, 0.4, false);
+
+                    //Far
+                    /*
+                    MoveTo(50, 45, 85, 1, 5, 0.3, false);
+                    sleep(200);
+                    MoveTo(60, 45, 85, 1, 5, 0.3, false);
+                    return; */
                 case 2: //RIGHT OR NULL
                     MoveTo(23.75, 28,0,1,5,0.4, false);
                     sleep(500);
@@ -188,11 +208,21 @@ public class RedBackDrop12000 extends LinearOpMode {
                     MoveTo(50, 28.5, 90, 1, 5, 0.3, true );
                     sleep(500);
                     MoveTo(60, 28.5, 90, 1, 5, 0.3, false);
-                    PlacePixel(3800, 1);
-                    MoveTo(55, 2, 90,1,5,0.5,false);
-                    //sleep(500);
-                    MoveTo(62, 2, 90,1, 5, 0.5, false);
+                    PlacePixel2();
+                    sleep(200);
 
+
+                    //Close
+                    MoveTo(50, 0, 90,1,5,0.4,false);
+                    sleep(500);
+                    MoveTo(60, 0, 0,1, 5, 0.4, false);
+
+                    //Far
+                    /*
+                    MoveTo(50, 45, 85, 1, 5, 0.3, false);
+                    sleep(200);
+                    MoveTo(60, 45, 85, 1, 5, 0.3, false);
+                    return; */
                     return;
 
             }
@@ -296,7 +326,7 @@ public class RedBackDrop12000 extends LinearOpMode {
 
         runtime.reset();
 
-        while (conf < 0.75 && opModeIsActive() && (runtime.seconds() <= 3.0)) {
+        while (conf < 0.45 && opModeIsActive() && (runtime.seconds() <= 3.0)) {
 
             List<Recognition> currentRecognitions = tfod.getRecognitions();
             telemetry.addData("# Objects Detected", currentRecognitions.size());
@@ -533,8 +563,46 @@ public class RedBackDrop12000 extends LinearOpMode {
         PixelServo.setPower(-speed);
         sleep(time);
         PixelServo.setPower(speed);
-        sleep(time/3);
+        sleep(time);
         PixelServo.setPower(0);
+    }
+    public void PlacePixel2()
+    {
+        double ReturnTime;
+        double endTIME = getRuntime() + 2; //Sets auto-end Time
+        double startTIME = getRuntime(); //Gets Start Time
+        while(getRuntime() < endTIME && PixelTouch.isPressed() == false)// Makes sure its within time and touchsensor is not pressed
+        {
+
+            PixelServo.setPower(-0.3);
+            telemetry.addData("placer", "GOING");
+            telemetry.update();
+
+
+        }
+        double newEnd = getRuntime() + 0.1;
+        while(getRuntime() < newEnd)
+        {
+
+        }
+
+        PixelServo.setPower(0);
+        ReturnTime = getRuntime() - startTIME - 0.1;
+        double newTIME = getRuntime() + ReturnTime;
+
+        while(getRuntime() < newTIME)
+        {
+            PixelServo.setPower(0.2);
+        }
+
+        PixelServo.setPower(0);
+
+        while(true)
+        {
+            telemetry.addData("pixel", PixelServo.getPower());
+            telemetry.update();
+        }
+
     }
 
 }   // end class

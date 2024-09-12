@@ -55,18 +55,18 @@ import java.util.Vector;
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list.
  */
-@Autonomous(name = "Red-Audience", group = "Concept")
+@Autonomous(name = "Blue-Audience", group = "Blue")
 // @Disabled
-public class RedAudience12000 extends LinearOpMode {
+public class BlueAudience12000 extends LinearOpMode {
 
     private static final boolean USE_WEBCAM = true;  // true for webcam, false for phone camera
 
     // TFOD_MODEL_ASSET points to a model file stored in the project Asset location,
     // this is only used for Android Studio when using models in Assets.
-    private static final String TFOD_MODEL_ASSET = "12000RedBaseModel.tflite";
+    private static final String TFOD_MODEL_ASSET = "12000BlueBaseModel.tflite";
     // TFOD_MODEL_FILE points to a model file stored onboard the Robot Controller's storage,
     // this is used when uploading models directly to the RC using the model upload interface.
-    private static final String TFOD_MODEL_FILE = "/sdcard/FIRST/tflitemodels/12000RedBaseModel.tflite";
+    private static final String TFOD_MODEL_FILE = "/sdcard/FIRST/tflitemodels/12000BlueBaseModel.tflite";
     // Define the labels recognized in the model for TFOD (must be in training order!)
     private static final String[] LABELS = {
        "REDdiabolo",
@@ -80,7 +80,6 @@ public class RedAudience12000 extends LinearOpMode {
     private DcMotor LeftEncoder = null;
     private CRServo PixelServo = null;
     private ColorSensor colorSensor = null;
-    private ColorSensor colorSensor2 = null;
     private TouchSensor PixelTouch = null;
 
     private Vector<Double> InitialPosition = new Vector<Double>(3);
@@ -121,7 +120,6 @@ public class RedAudience12000 extends LinearOpMode {
         LeftEncoder = hardwareMap.get(DcMotor.class, "left_odom");
         PixelServo = hardwareMap.get(CRServo.class, "pixel_servo");
         colorSensor = hardwareMap.get(ColorSensor.class, "color1");
-        colorSensor2 = hardwareMap.get(ColorSensor.class, "color2");
         PixelTouch = hardwareMap.get(TouchSensor.class, "pixel_touch");
         RobotIMU = hardwareMap.get(IMU.class, "imu");
 
@@ -142,56 +140,49 @@ public class RedAudience12000 extends LinearOpMode {
             int result = FindProp();
             switch(result){
                 case 0: //LEFT
-                    MoveTo(-10, 28 ,0, 1, 10, 0.4, false);
+                    MoveTo(5, 20 ,0, 2, 8, 0.4, false);
                     sleep(500);
-                    MoveTo(-10, 20, 0, 1,10,0.4, false);
+                    MoveTo(2, 28, -45, 2,8,0.4, false);
                     sleep(500);
-                    MoveTo(10, 5, 90, 1, 5, 0.4, false);
+                    MoveTo(10, 20, 0, 2, 8, 0.4, false);
                     sleep(500);
-                    MoveTo(100, 3, 90, 2,5, 0.6, false );
-                    MoveTo(120, 3, 90,1,5,0.25, true);
+                    //MoveTo(25, 35, 90, 1,5,0.4, false);
+                    MoveTo(5, 10, -90, 1, 5, 0.4, false);
                     sleep(500);
-                    //MoveTo(120, 41, 90, 0.5, 5, 0.4, false);
-                    //MoveTo(132, 41, 90,0.5, 5, 0.3, false);
-                    //PlacePixel(3800, 1);
-                    MoveTo(130, 3, 90, 1, 5, 0.4, false);
-
+                    //MoveTo(-75, 10, -90, 2, 5, 0.4, false);
+                    sleep(500);
+                    //MoveTo(-125, 10, -90, 2, 5, 0.3, true);
+                    //MoveTo(-130, 10, -90, 1, 5, 0.4, false);
                     //sleep(500);
                     return;
                 case 1: //CENTER
-                    MoveTo(6, 5 ,0, 1, 5, 0.4, false);
+                    MoveTo(5, 5 ,0, 1, 5, 0.4, false);
                     sleep(500);
-                    MoveTo(6, 38, 0, 1,5,0.4, false);
+                    MoveTo(5, 33.5, 0, 1,5,0.4, false);
                     sleep(500);
-                    MoveTo(7, 5, 90, 1,5,0.4, false);
+                    MoveTo(5, 20, 0, 1, 5, 0.4, false);
                     sleep(500);
-                    MoveTo(75, 3, 90, 2,5, 0.6, false );
-                    MoveTo(120, 3, 90,1,5,0.35, true);
+                    MoveTo(5, 10, -90, 1, 5, 0.4, false);
                     sleep(500);
-                    //MoveTo(120, 33, 90, 1, 5, 0.4, false);
-                    //MoveTo(136, 33, 90,1, 5, 0.3, false);
-                    //PlacePixel(3800, 1);
-                    //MoveTo(120, 36, 90, 1, 5, 0.4, false);
-                    MoveTo(130, 3, 90, 1, 5, 0.4, false);
+                    //MoveTo(-75, 10, -90, 2, 5, 0.4, false);
+                    sleep(500);
+                    //MoveTo(-125, 10, -90, 2, 5, 0.3, true);
+                    //MoveTo(-130, 10, -90, 1, 5, 0.4, false);
 
                     return;
                 case 2: //RIGHT OR NULL
-                    MoveTo(12, 28, 40,2,5,0.3, false);
+                    MoveTo(23.75, 28,0,1,5,0.4, false);
                     sleep(500);
-                    //MoveTo(23.75, 28,40,2,10,0.4, false);
+                    MoveTo(23.75, 20, 0, 1, 10,0.4, false );
                     sleep(500);
-                    MoveTo(7, 22, 40, 2, 10,0.4, false );
+                    MoveTo(5, 10, -90, 1, 5, 0.4, false);
                     sleep(500);
-                    MoveTo(10,5,90,1,5,0.4, false);
+                    //MoveTo(-75, 10, -90, 2, 5, 0.4, false);
                     sleep(500);
-                    MoveTo(100, 3, 90, 2,5, 0.6, false );
-                    MoveTo(120, 3, 90,1,5,0.25, true);
-                    sleep(500);
-                    //MoveTo(120, 28, 90, 1, 5, 0.4, false);
-                    //MoveTo(132, 28, 90,1, 5, 0.3, false);
-                    //PlacePixel(3800, 1);
-                    //MoveTo(120, 36, 90, 1, 5, 0.4, false);
-                    MoveTo(130, 3, 90, 1, 5, 0.4, false);
+                    //MoveTo(-125, 10, -90, 2, 5, 0.3, true);
+                    //MoveTo(-130, 10, -90, 1, 5, 0.4, false);
+                    //MoveTo(5, 10, 0, 1,10, 0.4, false);
+                    //sleep(500);
 
                     return;
 
@@ -296,7 +287,7 @@ public class RedAudience12000 extends LinearOpMode {
 
         runtime.reset();
 
-        while (conf < 0.65 && opModeIsActive() && (runtime.seconds() <= 4.0)) {
+        while (conf < 0.75 && opModeIsActive() && (runtime.seconds() <= 3.0)) {
 
             List<Recognition> currentRecognitions = tfod.getRecognitions();
             telemetry.addData("# Objects Detected", currentRecognitions.size());
@@ -339,8 +330,8 @@ public class RedAudience12000 extends LinearOpMode {
     }   // end method telemetryTfod()
     public void MoveTo(double TargetX, double TargetY, double TargetAngle, double PositionTolerance, double AngleTolerance, double Speed, boolean Color)
     {
-        //double Start = getRuntime();
-        double END = getRuntime() + 4;
+        double Start = getRuntime();
+        double END = getRuntime() + 3;
         TargetAngle = (TargetAngle * (2 * Math.PI) / 360); //Convert target angle to radians
         AngleTolerance = AngleTolerance * (2* Math.PI/ 360); //Convert angle tolerance from degres to radians
         RightEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset encoder
@@ -494,18 +485,17 @@ public class RedAudience12000 extends LinearOpMode {
             RightEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             LeftEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-            if(((colorSensor.red() - colorSensor.blue() > colorSensor.green()) || colorSensor2.red() - colorSensor2.blue() > colorSensor2.green()) && Color)
+            if(colorSensor.red() - colorSensor.blue() > colorSensor.green() && Color)
             {
-                //SetVector(InitialPosition, TargetX, Cfy, RobotYaw + Math.PI);
-                Cfx = TargetX;
-                //LeftFront.setPower(0);
-                //LeftBack.setPower(0);
-                //RightBack.setPower(0);
-                //RightFront.setPower(0);
+                SetVector(InitialPosition, TargetX, Cfy, RobotYaw + Math.PI);
+                LeftFront.setPower(0);
+                LeftBack.setPower(0);
+                RightBack.setPower(0);
+                RightFront.setPower(0);
                 telemetry.addData("Red", "SAW RED");
                 telemetry.update();
                 //sleep(1000);
-                //return;
+                return;
             }
             //ThetaF = (ThetaF * 360) / (2 * Math.PI);
         }
@@ -537,7 +527,7 @@ public class RedAudience12000 extends LinearOpMode {
         sleep(time/3);
         PixelServo.setPower(0);
     }
-    public void PlacePixel()
+    public void PlacePixel2()
     {
         double ReturnTime;
         double endTIME = getRuntime() + 2; //Sets auto-end Time
@@ -575,6 +565,5 @@ public class RedAudience12000 extends LinearOpMode {
         }
 
     }
-
 }   // end class
 // around the world x100000, 14000000 BPM is the craziest of all crazies

@@ -31,6 +31,7 @@ package org.firstinspires.ftc.teamcode;
 //package org.firstinspires.ftc.robotcontroller.external.samples;
 
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -53,7 +54,7 @@ import com.qualcomm.robotcore.util.Range;
  */
 
 @TeleOp(name="OpMode", group="Linear Opmode")
-//@Disabled
+@Disabled
 public class LinearOpMode12000 extends LinearOpMode {
 
     // Declare OpMode members.

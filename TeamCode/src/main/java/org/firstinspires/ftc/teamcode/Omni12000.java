@@ -37,6 +37,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.hardware.IMU;
+//import com.qualcomm.robotcore.hardware.inter
 
 import org.checkerframework.checker.units.qual.Angle;
 import org.firstinspires.ftc.robotcore.external.Func;
@@ -70,6 +71,7 @@ public class Omni12000 extends LinearOpMode {
 
     private String ArmPosition = "NORMAL"; //DOWN, PLANE, NORMAL
     private IMU Imu = null;
+    private boolean droneLaunched = false;
 
 
     //Motors F = Front B = Back
@@ -79,7 +81,7 @@ public class Omni12000 extends LinearOpMode {
     @Override
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
-        Imu = hardwareMap.get(IMU.class, "imu");
+        Imu = hardwareMap.get(IMU.class, "Eimu");
         telemetry.update();
         Functions = new Robot12000(this);
         Functions.init();
@@ -98,6 +100,10 @@ public class Omni12000 extends LinearOpMode {
            double lateral =  gamepad1.left_stick_x;
            double yaw     =  gamepad1.right_stick_x;
 
+           if(axial == 0 && lateral == 0 )
+           {
+               yaw = gamepad1.right_stick_x/2;
+           }
            double BleftFrontPower  = axial + lateral - yaw ;
            double BrightFrontPower = -axial + lateral - yaw;
            double BleftBackPower   = axial - lateral - yaw ;
@@ -200,10 +206,10 @@ public class Omni12000 extends LinearOpMode {
 
 
 
-           if(gamepad1.left_bumper)
+           if(gamepad1.left_bumper) //Arm UP
            {
                Functions.Arm(1);
-           }else if(gamepad1.right_bumper)
+           }else if(gamepad1.right_bumper) // Arm DOWN
            {
                Functions.Arm(-1);
            }else {
@@ -216,48 +222,54 @@ public class Omni12000 extends LinearOpMode {
            //ARM MODE
 
 
-           if(!gamepad1.x && !gamepad1.left_stick_button)
+           if(!gamepad1.x && !gamepad1.left_stick_button && !gamepad1.y && !gamepad1.a) //Makes sure buttons are not pressed
            {
                toggleReady = true;
            }
 
-           /*if(gamepad1.y && toggleReady)
-           {
-               toggleReady = false;
-               if(armSpeed == 1) {
-                   armSpeed = 0.1;
-               }else {
-                   armSpeed = 1;
-               }
-           }*/
 
-           if(gamepad1.x && gamepad1.x)
+
+           if(gamepad1.x && toggleReady) //Goes to normal drive in case of emergencies
            {
                BackUpDrive = true;
+               toggleReady = false;
            }
 
 
-           if(gamepad1.a)
+           if(gamepad1.y && toggleReady) // LAUNCH PLANE!
            {
+
                Functions.Drone(1);
+               /*    droneLaunched = true;
+               }else {
+                   Functions.Drone(0.1);
+               } */
+
            }
 
-           if(gamepad1.dpad_down)
+           if(gamepad1.a && toggleReady)
+           {
+               toggleReady = false;
+               Functions.ChangeIntakeLIFT();
+           }
+
+            //PIXEL PLACER (place on backboard if auto fails)
+           /*if(gamepad1.dpad_down)
            {
                Functions.PixelPlacer(1);
-           }
-           if(gamepad1.dpad_up)
-           {
+           } else if(gamepad1.dpad_up){
                Functions.PixelPlacer(-1);
-           }
+           } else {
+               Functions.PixelPlacer(0);
+           }*/
 
 
-           if(gamepad1.dpad_right)
+           if(gamepad1.dpad_right) //Arm gets set in plane position
            {
                ArmPosition = "PLANE";
                Functions.ArmTarget(ArmPosition);
            }
-           if(gamepad1.dpad_left)
+           if(gamepad1.dpad_left) //Arm gets set to original / start position
            {
                ArmPosition = "DOWN";
                Functions.ArmTarget(ArmPosition);
@@ -265,8 +277,7 @@ public class Omni12000 extends LinearOpMode {
 
            if(gamepad1.b) //NOT NEEDED
            {
-               ArmPosition = "NORMAL";
-               Functions.ArmTarget(ArmPosition);
+               Functions.Drone(0.1);
            }
 
 
@@ -278,11 +289,15 @@ public class Omni12000 extends LinearOpMode {
 
            if(gamepad1.start && !gamepad1.x) // Camera Pointing Away
            {
+
                RobotStartAngle = Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+
            }
 
            // Show the elapsed game time and wheel power.
             //telemetry.addData("ArmSpeed", armSpeed);
+            telemetry.addData("START", (360 * RobotStartAngle)/(Math.PI * 2));
+            telemetry.addData("IMU", Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
             telemetry.addData("Back Up", BackUpDrive);
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             //telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
