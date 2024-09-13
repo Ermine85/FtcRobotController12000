@@ -63,7 +63,7 @@ public class AileenTestScript extends LinearOpMode {
     private double FieldAngle = 0;
     private double CurrentRobotAngle = 0;
 
-    private String ArmPosition = "NORMAL"; //DOWN, PLANE, NORMAL
+    private String ArmPosition = "NORMAL"; //DOWN, DRONE, NORMAL
     private IMU Imu = null;
 
 
@@ -88,11 +88,11 @@ public class AileenTestScript extends LinearOpMode {
        while (opModeIsActive()) {
            double max;
            CurrentRobotAngle = RobotStartAngle - Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
-           // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
+           // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate. //strafe means going side to side
            double axial   =  -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value --
            double lateral =  gamepad1.left_stick_x;
            double yaw     =  gamepad1.right_stick_x;
-
+            //yaw is the spinning from side to side
            double BleftFrontPower  = axial + lateral - yaw ;
            double BrightFrontPower = -axial + lateral - yaw;
            double BleftBackPower   = axial - lateral - yaw ;
@@ -211,7 +211,7 @@ public class AileenTestScript extends LinearOpMode {
            //ARM MODE
 
 
-           if(!gamepad1.x && !gamepad1.left_stick_button)
+           if(!gamepad1.x && !gamd  epad1.left_stick_button)
            {
                toggleReady = true;
            }
@@ -249,7 +249,7 @@ public class AileenTestScript extends LinearOpMode {
 
            if(gamepad1.dpad_right)
            {
-               ArmPosition = "PLANE";
+               ArmPosition = "DRONE";
                Functions.ArmTarget(ArmPosition);
            }
            if(gamepad1.dpad_left)
