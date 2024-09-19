@@ -37,14 +37,11 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+//import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.tfod.TfodProcessor;
+//import org.firstinspires.ftc.vision.tfod.TfodProcessor;
 
-import java.util.List;
 import java.util.Vector;
 
 /*
@@ -54,7 +51,7 @@ import java.util.Vector;
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list.
  */
-@Autonomous(name = "Red-Audience", group = "Concept")
+@Autonomous(name = "Auto", group = "Concept")
 // @Disabled
 public class SampleOdometry extends LinearOpMode {
 
@@ -71,16 +68,16 @@ public class SampleOdometry extends LinearOpMode {
        "REDdiabolo",
     };
     public int newTarget = 0;
-    private DcMotor LeftFront = null;
-    private DcMotor LeftBack = null;
+    private DcMotor LeftFrontALE = null;
+    private DcMotor LeftBackABE = null;
     private DcMotor RightFront = null;
-    private DcMotor RightBack = null;
+    private DcMotor RightBackARE = null;
     private DcMotor RightEncoder = null; //Y
     private DcMotor LeftEncoder = null; //Y
 
     private DcMotor BackEncoder = null; //X
-    private CRServo PixelServo = null;
-    private ColorSensor colorSensor = null;
+    //private CRServo PixelServo = null;
+    //private ColorSensor colorSensor = null;
 
     private Vector<Double> InitialPosition = new Vector<Double>(3);
     private Vector<Double> CurrentPosition = new Vector<Double>(3);
@@ -89,18 +86,18 @@ public class SampleOdometry extends LinearOpMode {
 
     private double RobotAngle = 0;
 
-    private double WheelD = 2; //Wheel-diameter;
+    private double WheelD = 11; //Wheel-diameter;
     private double StartAngle = 0; //setting starting robot orientation in radians
 
 
     private ElapsedTime   runtime = new ElapsedTime();
-    private double COUNTS_PER_INCH  = (((((2.0 * Math.PI * (WheelD/2)) / 8192.0)))); // * 2.54 * 18.0) / 70.0) / 18.0 * 28.0) ; // 2pi * wheel radius / encoder tpr
+    private double COUNTS_PER_INCH  = (((((2.0 * Math.PI * (2.0)) / 8192.0)))); // * 2.54 * 18.0) / 70.0) / 18.0 * 28.0) ; // 2pi * wheel radius / encoder tpr
 
 
     /**
      * The variable to store our instance of the TensorFlow Object Detection processor.
      */
-    private TfodProcessor tfod;
+    //private TfodProcessor tfod;
 
     /**
      * The variable to store our instance of the vision portal.
@@ -116,27 +113,27 @@ public class SampleOdometry extends LinearOpMode {
         // Wait for the DS start button to be touched.
         telemetry.addData("DS preview on/off", "3 dots, Camera Stream");
         telemetry.addData(">", "Touch Play to start OpMode");
-        LeftFront = hardwareMap.get(DcMotor.class, "left_front");
+        LeftFrontALE = hardwareMap.get(DcMotor.class, "left_front");
         RightFront = hardwareMap.get(DcMotor.class, "right_front");
-        LeftBack = hardwareMap.get(DcMotor.class, "left_back");
-        RightBack = hardwareMap.get(DcMotor.class, "right_back");
-        RightEncoder = hardwareMap.get(DcMotor.class, "right_odom"); //Change to motor slot if used by another motor
-        LeftEncoder = hardwareMap.get(DcMotor.class, "left_odom"); //Change to motor slot if used by another motor
-        BackEncoder = hardwareMap.get(DcMotor.class, "back_odom"); //Change to motor slot if used by another motor
-        PixelServo = hardwareMap.get(CRServo.class, "pixel_servo");
-        colorSensor = hardwareMap.get(ColorSensor.class, "color1");
+        LeftBackABE = hardwareMap.get(DcMotor.class, "left_back");
+        RightBackARE = hardwareMap.get(DcMotor.class, "right_back");
+        //RightEncoder = hardwareMap.get(DcMotor.class, "right_odom"); //Change to motor slot if used by another motor
+        //LeftEncoder = hardwareMap.get(DcMotor.class, "left_odom"); //Change to motor slot if used by another motor
+        //BackEncoder = hardwareMap.get(DcMotor.class, "back_odom"); //Change to motor slot if used by another motor
+        //PixelServo = hardwareMap.get(CRServo.class, "pixel_servo");
+        //colorSensor = hardwareMap.get(ColorSensor.class, "color1");
 
         RobotIMU = hardwareMap.get(IMU.class, "imu");
 
-        LeftFront.setDirection(DcMotor.Direction.FORWARD);
-        LeftBack.setDirection(DcMotor.Direction.FORWARD);
+        LeftFrontALE.setDirection(DcMotor.Direction.FORWARD);
+        LeftBackABE.setDirection(DcMotor.Direction.FORWARD);
         RightFront.setDirection(DcMotor.Direction.FORWARD);
-        RightBack.setDirection(DcMotor.Direction.FORWARD);
+        RightBackARE.setDirection(DcMotor.Direction.FORWARD);
 
-        //StartAngle = RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+        StartAngle = RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
 
-        StartVector(InitialPosition, 0, 0, 10); // might want to be SetVector
-        StartVector(CurrentPosition, 0, 0,10);  // ^
+        StartVector(InitialPosition, 0, 0, 0); // might want to be SetVector
+        StartVector(CurrentPosition, 0, 0,0);  // ^
 
         telemetry.update();
         waitForStart();
@@ -146,15 +143,15 @@ public class SampleOdometry extends LinearOpMode {
             // Put navigation code here based on result = 0, 1, or 2
 
 
-
+            MoveTo(5, 5, 45, 1,5,0.5);
 
 
                 // Push telemetry to the Driver Station.
-                telemetry.update();
+            telemetry.update();
 
                 // Save CPU resources; can resume streaming when needed.
 
-            visionPortal.stopStreaming();
+            //visionPortal.stopStreaming();
 
 
                 // Share the CPU.
@@ -162,7 +159,7 @@ public class SampleOdometry extends LinearOpMode {
         }
 
         // Save more CPU resources when camera is no longer needed.
-        visionPortal.close();
+        //visionPortal.close();
 
     }   // end runOpMode()
 
@@ -173,18 +170,19 @@ public class SampleOdometry extends LinearOpMode {
      * Initialize the TensorFlow Object Detection processor.
      */
 
-    public void MoveTo(double TargetX, double TargetY, double TargetAngle, double PositionTolerance, double AngleTolerance, double Speed, boolean Color)
+    public void MoveTo(double TargetX, double TargetY, double TargetAngle, double PositionTolerance, double AngleTolerance, double Speed)
     {
         double Start = getRuntime();
         double END = getRuntime() + 3;
         TargetAngle = (TargetAngle * (2 * Math.PI) / 360); //Convert target angle to radians
         AngleTolerance = AngleTolerance * (2* Math.PI/ 360); //Convert angle tolerance from degres to radians
-        RightEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset encoder
-        LeftEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset encoder
-        BackEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset
-        RightEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER); //start measuring encoders
-        LeftEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER); //start measuring encoders
-        BackEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        RightBackARE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset encoder
+        LeftFrontALE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset encoder
+        LeftBackABE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset
+        RightBackARE.setMode(DcMotor.RunMode.RUN_USING_ENCODER); //start measuring encoders
+        LeftFrontALE.setMode(DcMotor.RunMode.RUN_USING_ENCODER); //start measuring encoders
+        LeftBackABE.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
 
         //Set Position
         double Crx = 0; //set robot x position to 0
@@ -208,28 +206,41 @@ public class SampleOdometry extends LinearOpMode {
         double AngleDifference = Math.abs(TargetAngle-RobotYaw); //calculating the difference to angle from target
         //double RB = 5;
 
-        while((RadiusToTarget > PositionTolerance || AngleDifference > AngleTolerance) && (getRuntime() < END)){
+        while((RadiusToTarget > PositionTolerance || AngleDifference > AngleTolerance))
+        {
             //RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
             //double AngleDelta = Math.atan((TargetX - CurrentPosition.get(0))/(TargetY - CurrentPosition.get(1)));
 
-            RobotYaw = StartAngle - RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
 
+            telemetry.addData("ImuAngle", StartAngle - RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
             //Calculate robot distance and direction on robot frame of reference
 
-            double LE = LeftEncoder.getCurrentPosition();
-            double RE = RightEncoder.getCurrentPosition();
-            double DltX = RightEncoder.getCurrentPosition();
+            double LE = LeftFrontALE.getCurrentPosition() * -1;
+            double RE = RightBackARE.getCurrentPosition() * -1;
+            double DltX = LeftBackABE.getCurrentPosition() * -1;
 
             double DltY = (LE - RE) / 2;
             //double DltX = BE;
-            double DltA = (LE + RE) / WheelD;
+            double DltA = ((LE) + (RE)) / (5.5/COUNTS_PER_INCH);
+
+            RobotAngle += DltA;
+
+            /*if (RobotAngle > (2 * Math.PI))
+            {
+                RobotAngle -= (2 * Math.PI);
+            }else if (RobotAngle < 0)
+            {
+                RobotAngle += (2 * Math.PI);
+            }*/
+
 
             //Distance Traveled
             double D1 = COUNTS_PER_INCH * Math.sqrt(Math.pow(DltX, 2) + Math.pow(DltY, 2));
-
+            RobotYaw = RobotAngle;
 
             double Theta1 = Math.atan(DltY/DltX);  //- (Math.PI / 4.0);
             telemetry.addData("Raw Robot Theta",Theta1);
+            //Display "Angle"
 
 
             if (DltX == 0 && DltY >= 0) {
@@ -260,6 +271,12 @@ public class SampleOdometry extends LinearOpMode {
             Cfx = Cfx + Dfx;
             Cfy = Cfy + Dfy;
 
+            telemetry.addData("Angle", (RobotAngle * 180)/Math.PI);
+
+            telemetry.addData("X", Cfx);
+            telemetry.addData("Y", Cfy);
+            telemetry.update();
+
             //Calculate distance X and Y from target - negative to flip the coordinate system
             double DeltaX = (TargetX - Cfx);
             double DeltaY = (TargetY - Cfy);
@@ -268,7 +285,9 @@ public class SampleOdometry extends LinearOpMode {
             RadiusToTarget = Math.sqrt(Math.pow(DeltaX, 2) + Math.pow(DeltaY, 2));
             //Calculate direction to target
             if (DeltaY == 0)  DeltaY = 0.001;
+
             double Ttf = Math.atan(DeltaX / DeltaY);
+
             if (DeltaY < 0) {
                 Ttf = Ttf + Math.PI;
             }
@@ -283,7 +302,7 @@ public class SampleOdometry extends LinearOpMode {
 
             //RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
 
-            double RobotAngle =  Ttf - RobotYaw;
+            //RobotAngle =  Ttf - RobotYaw;
 
             AngleDifference = Math.abs(TargetAngle-RobotYaw);
             //Motor Speed
@@ -318,42 +337,48 @@ public class SampleOdometry extends LinearOpMode {
                 M4 = M4/Mmax;
             }
 
-            LeftFront.setPower(M1 * Speed);
+            /*LeftFrontALE.setPower(M1 * Speed);
             RightFront.setPower(M2 * Speed);
-            LeftBack.setPower(M3 * Speed);
-            RightBack.setPower(M4 * Speed);
+            LeftBackABE.setPower(M3 * Speed);
+            RightBackARE.setPower(M4 * Speed);*/
 
             // RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
 
 
-            //RobotYaw = RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+            LE = LeftFrontALE.getCurrentPosition() * -1;
+            RE = RightBackARE.getCurrentPosition() * -1;
+            DltX = LeftBackABE.getCurrentPosition() * -1;
+
+            DltY = (LE - RE) / 2;
+            //double DltX = BE;
+            DltA = ((LE) + (RE)) / (WheelD/COUNTS_PER_INCH);
+
+
+            RobotAngle = RobotAngle + DltA;
+
+
+
+
             //double DeltaX = (RightEncoder.getCurrentPosition() * Math.cos(Math.PI/4 + RobotYaw)) - (LeftEncoder.getCurrentPosition() * Math.cos(Math.PI/4 - RobotYaw));
             //double DeltaY = (RightEncoder.getCurrentPosition() * Math.sin(Math.PI/4 + RobotYaw)) + (LeftEncoder.getCurrentPosition() * Math.sin(Math.PI/4 - RobotYaw));
 
-            //SetVector(CurrentPosition, CurrentPosition.get(0) + (DeltaX * COUNTS_PER_INCH), CurrentPosition.get(1) + (DeltaY * COUNTS_PER_INCH), RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
-            RightEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            LeftEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            RightEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            LeftEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            //SetVector(CurrentPosition, CurrentPosition.get(0) + (DltX * COUNTS_PER_INCH), CurrentPosition.get(1) + (DltY * COUNTS_PER_INCH), RobotAngle);
+            RightBackARE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            LeftFrontALE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            LeftBackABE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            RightBackARE.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            LeftFrontALE.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            LeftBackABE.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-            if(colorSensor.red() - colorSensor.blue() > colorSensor.green() && Color)
-            {
-                SetVector(InitialPosition, TargetX, Cfy, RobotYaw + Math.PI);
-                LeftFront.setPower(0);
-                LeftBack.setPower(0);
-                RightBack.setPower(0);
-                RightFront.setPower(0);
-                telemetry.addData("Red", "SAW RED");
-                telemetry.update();
-                //sleep(1000);
-                return;
-            }
+
+
+
             //ThetaF = (ThetaF * 360) / (2 * Math.PI);
         }
-        SetVector(InitialPosition, Cfx, Cfy, RobotYaw + Math.PI);
-        LeftFront.setPower(0);
-        LeftBack.setPower(0);
-        RightBack.setPower(0);
+        SetVector(InitialPosition, Cfx, Cfy, RobotAngle);
+        LeftFrontALE.setPower(0);
+        LeftBackABE.setPower(0);
+        RightBackARE.setPower(0);
         RightFront.setPower(0);
     }
 

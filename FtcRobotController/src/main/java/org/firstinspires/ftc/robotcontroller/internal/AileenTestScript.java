@@ -37,7 +37,7 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.teamcode.Robot12000;
+
 
 //import org.firstinspires.ftc.robotcontroller.external.samples.RobotHardware;
 
@@ -211,7 +211,7 @@ public class AileenTestScript extends LinearOpMode {
            //ARM MODE
 
 
-           if(!gamepad1.x && !gamd  epad1.left_stick_button)
+           if(!gamepad1.x && !gamepad1.left_stick_button)
            {
                toggleReady = true;
            }

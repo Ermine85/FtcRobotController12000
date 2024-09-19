@@ -27,7 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.robotcontroller.internal;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -40,9 +40,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
+//import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.tfod.TfodProcessor;
+//import org.firstinspires.ftc.vision.tfod.TfodProcessor;
 
 import java.util.List;
 import java.util.Vector;
@@ -94,7 +94,7 @@ public class RedAudience12000 extends LinearOpMode {
     /**
      * The variable to store our instance of the TensorFlow Object Detection processor.
      */
-    private TfodProcessor tfod;
+    //private TfodProcessor tfod;
 
     /**
      * The variable to store our instance of the vision portal.
@@ -104,7 +104,6 @@ public class RedAudience12000 extends LinearOpMode {
     @Override
     public void runOpMode() {
 
-        initTfod();
         int position;
 
         // Wait for the DS start button to be touched.
@@ -135,46 +134,7 @@ public class RedAudience12000 extends LinearOpMode {
         if (opModeIsActive()) {
 
             // Put navigation code here based on result = 0, 1, or 2
-            int result = FindProp();
-            switch(result){
-                case 0: //LEFT
-                    MoveTo(-6.5, 28 ,0, 1, 10, 0.4, false);
-                    sleep(500);
-                    MoveTo(-6.5, 20, 0, 1,10,0.4, false);
-                    sleep(500);
-                    MoveTo(10, 5, 90, 1, 5, 0.4, false);
-                    //sleep(500);
-                    return;
-                case 1: //CENTER
-                    MoveTo(6, 5 ,0, 1, 5, 0.4, false);
-                    sleep(500);
-                    MoveTo(6, 35.5, 0, 1,5,0.4, false);
-                    sleep(500);
-                    MoveTo(7, 5, 90, 1,5,0.4, false);
-                    sleep(500);
-                    MoveTo(75, 3, 90, 2,5, 0.6, false );
-                    MoveTo(120, 3, 90,1,5,0.35, true);
-                    sleep(500);
-                    MoveTo(120, 30, 90, 1, 5, 0.3, false);
-                    MoveTo(128, 30, 90,1, 5, 0.3, false);
-                    PlacePixel(3800, 1);
-                    MoveTo(120, 36, 90, 1, 5, 0.4, false);
-                    return;
-                case 2: //RIGHT OR NULL
-                    MoveTo(12, 28, 40,2,5,0.3, false);
-                    sleep(500);
-                    //MoveTo(23.75, 28,40,2,10,0.4, false);
-                    sleep(500);
-                    MoveTo(7, 22, 40, 2, 10,0.4, false );
-                    sleep(500);
-                    MoveTo(10,5,90,1,5,0.4, false);
-                    //MoveTo(5, 10, 0, 1,10, 0.4, false);
-                    //sleep(500);
-
-                    return;
-
-            }
-
+            //int result = FindProp();
 
 
                 // Push telemetry to the Driver Station.
@@ -182,7 +142,7 @@ public class RedAudience12000 extends LinearOpMode {
 
                 // Save CPU resources; can resume streaming when needed.
 
-            visionPortal.stopStreaming();
+            //visionPortal.stopStreaming();
 
 
                 // Share the CPU.
@@ -190,7 +150,7 @@ public class RedAudience12000 extends LinearOpMode {
         }
 
         // Save more CPU resources when camera is no longer needed.
-        visionPortal.close();
+        //visionPortal.close();
 
     }   // end runOpMode()
 
@@ -200,121 +160,12 @@ public class RedAudience12000 extends LinearOpMode {
     /**
      * Initialize the TensorFlow Object Detection processor.
      */
-    private void initTfod() {
-
-        // Create the TensorFlow processor by using a builder.
-        tfod = new TfodProcessor.Builder()
-
-            // With the following lines commented out, the default TfodProcessor Builder
-            // will load the default model for the season. To define a custom model to load, 
-            // choose one of the following:
-            //   Use setModelAssetName() if the custom TF Model is built in as an asset (AS only).
-            //   Use setModelFileName() if you have downloaded a custom team model to the Robot Controller.
-            .setModelAssetName(TFOD_MODEL_ASSET)
-            //.setModelFileName(TFOD_MODEL_FILE)
-
-            // The following default settings are available to un-comment and edit as needed to 
-            // set parameters for custom models.
-            .setModelLabels(LABELS)
-            //.setIsModelTensorFlow2(true)
-            //.setIsModelQuantized(true)
-            //.setModelInputSize(300)
-            //.setModelAspectRatio(16.0 / 9.0)
-
-            .build();
-
-        // Create the vision portal by using a builder.
-        VisionPortal.Builder builder = new VisionPortal.Builder();
-
-        // Set the camera (webcam vs. built-in RC phone camera).
-        if (USE_WEBCAM) {
-            builder.setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"));
-        } else {
-            builder.setCamera(BuiltinCameraDirection.BACK);
-        }
-
-        // Choose a camera resolution. Not all cameras support all resolutions.
-        //builder.setCameraResolution(new Size(640, 480));
-
-        // Enable the RC preview (LiveView).  Set "false" to omit camera monitoring.
-        //builder.enableLiveView(true);
-
-        // Set the stream format; MJPEG uses less bandwidth than default YUY2.
-        //builder.setStreamFormat(VisionPortal.StreamFormat.YUY2);
-
-        // Choose whether or not LiveView stops if no processors are enabled.
-        // If set "true", monitor shows solid orange screen if no processors enabled.
-        // If set "false", monitor shows camera view without annotations.
-        //builder.setAutoStopLiveView(false);
-
-        // Set and enable the processor.
-        builder.addProcessor(tfod);
-
-        // Build the Vision Portal, using the above settings.
-        visionPortal = builder.build();
-
-        // Set confidence threshold for TFOD recognitions, at any time.
-        //tfod.setMinResultConfidence(0.75f);
-
-        // Disable or re-enable the TFOD processor at any time.
-        //visionPortal.setProcessorEnabled(tfod, true);
-
-    }   // end method initTfod()
 
     /**
      * Add telemetry about TensorFlow Object Detection (TFOD) recognitions.
      */
-    private int FindProp() {
-        tfod.setZoom(1.0);
 
-        double conf = 0.0d;
-        double x = 0.0d;
-        double y = 0.0d;
-        int position = 2;
-
-        runtime.reset();
-
-        while (conf < 0.75 && opModeIsActive() && (runtime.seconds() <= 3.0)) {
-
-            List<Recognition> currentRecognitions = tfod.getRecognitions();
-            telemetry.addData("# Objects Detected", currentRecognitions.size());
-
-            // Step through the list of recognitions and display info for each one.
-            for (Recognition recognition : currentRecognitions) {
-                x = (recognition.getLeft() + recognition.getRight()) / 2;
-                y = (recognition.getTop() + recognition.getBottom()) / 2;
-                conf = recognition.getConfidence();
-
-                telemetry.addData("", " ");
-                telemetry.addData("Image", "%s (%.0f %% Conf.)", recognition.getLabel(), recognition.getConfidence() * 100);
-                telemetry.addData("- Position", "%.0f / %.0f", x, y);
-                telemetry.addData("- Size", "%.0f x %.0f", recognition.getWidth(), recognition.getHeight());
-                sleep(500);
-            }       // end for() loop
-            telemetry.update();
-        }       // end while() loop
-        if (runtime.seconds() > 3.0) {
-            position = 2;
-        }
-        else {
-            if (x >= 300) {
-                position = 1;
-            }
-            else {
-                if (x < 300) {
-                    position = 0;
-                }
-                else {
-                    position = 2;
-                }
-            }
-        }
-
-        telemetry.addData("Position", position);
-        telemetry.update();
-        //sleep(5000);
-        return(position);
-    }   // end method telemetryTfod()
+     // end method telemetryTfod()
     public void MoveTo(double TargetX, double TargetY, double TargetAngle, double PositionTolerance, double AngleTolerance, double Speed, boolean Color)
     {
         double Start = getRuntime();
