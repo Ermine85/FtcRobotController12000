@@ -31,8 +31,6 @@ package org.firstinspires.ftc.robotcontroller.internal;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -51,7 +49,7 @@ import java.util.Vector;
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list.
  */
-@Autonomous(name = "Auto", group = "Concept")
+@Autonomous(name = "OdometryTest", group = "Concept")
 // @Disabled
 public class SampleOdometry extends LinearOpMode {
 
@@ -86,12 +84,12 @@ public class SampleOdometry extends LinearOpMode {
 
     private double RobotAngle = 0;
 
-    private double WheelD = 11; //Wheel-diameter;
+    private double TrackLength = 12.5; //Track-Length;
     private double StartAngle = 0; //setting starting robot orientation in radians
 
 
     private ElapsedTime   runtime = new ElapsedTime();
-    private double COUNTS_PER_INCH  = (((((2.0 * Math.PI * (2.0)) / 8192.0)))); // * 2.54 * 18.0) / 70.0) / 18.0 * 28.0) ; // 2pi * wheel radius / encoder tpr
+    private double COUNTS_PER_INCH  = 2000 / (Math.PI * 1.25984);
 
 
     /**
@@ -155,7 +153,7 @@ public class SampleOdometry extends LinearOpMode {
 
 
                 // Share the CPU.
-                sleep(20);
+            sleep(20000);
         }
 
         // Save more CPU resources when camera is no longer needed.
@@ -206,7 +204,8 @@ public class SampleOdometry extends LinearOpMode {
         double AngleDifference = Math.abs(TargetAngle-RobotYaw); //calculating the difference to angle from target
         //double RB = 5;
 
-        while((RadiusToTarget > PositionTolerance || AngleDifference > AngleTolerance))
+        //while((RadiusToTarget > PositionTolerance || AngleDifference > AngleTolerance))
+        while(RadiusToTarget > PositionTolerance)
         {
             //RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
             //double AngleDelta = Math.atan((TargetX - CurrentPosition.get(0))/(TargetY - CurrentPosition.get(1)));
@@ -221,7 +220,12 @@ public class SampleOdometry extends LinearOpMode {
 
             double DltY = (LE - RE) / 2;
             //double DltX = BE;
-            double DltA = ((LE) + (RE)) / (5.5/COUNTS_PER_INCH);
+            double DltA = 0;
+            if(LE > 0 || RE > 0)
+            {
+                DltA =  GetDeltaAngle(LE, RE);
+
+            }
 
             RobotAngle += DltA;
 
@@ -272,10 +276,12 @@ public class SampleOdometry extends LinearOpMode {
             Cfy = Cfy + Dfy;
 
             telemetry.addData("Angle", (RobotAngle * 180)/Math.PI);
-
+            telemetry.addData("RtT", RadiusToTarget);
             telemetry.addData("X", Cfx);
             telemetry.addData("Y", Cfy);
             telemetry.update();
+
+            //sleep(2000);
 
             //Calculate distance X and Y from target - negative to flip the coordinate system
             double DeltaX = (TargetX - Cfx);
@@ -351,8 +357,10 @@ public class SampleOdometry extends LinearOpMode {
 
             DltY = (LE - RE) / 2;
             //double DltX = BE;
-            DltA = ((LE) + (RE)) / (WheelD/COUNTS_PER_INCH);
-
+            if(LE > 0 || RE > 0)
+            {
+                DltA =  GetDeltaAngle(LE,RE);
+            }
 
             RobotAngle = RobotAngle + DltA;
 
@@ -375,6 +383,7 @@ public class SampleOdometry extends LinearOpMode {
 
             //ThetaF = (ThetaF * 360) / (2 * Math.PI);
         }
+
         SetVector(InitialPosition, Cfx, Cfy, RobotAngle);
         LeftFrontALE.setPower(0);
         LeftBackABE.setPower(0);
@@ -396,5 +405,13 @@ public class SampleOdometry extends LinearOpMode {
     }
 
 
+    public double GetDeltaAngle(double leftencoder, double rightencoder)
+    {
+        //leftencoder = leftencoder * COUNTS_PER_INCH;
+        //rightencoder = rightencoder * COUNTS_PER_INCH;
+        //double DeltaAngle = TrackLength * ((leftencoder + rightencoder/2)/(leftencoder-rightencoder));
+        double DeltaAngle = ((leftencoder + rightencoder)/2)/TrackLength;
+        return DeltaAngle;
+    }
 }   // end class
 // around the world x100000, 14000000 BPM is the craziest of all crazies
