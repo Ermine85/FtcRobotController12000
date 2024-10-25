@@ -54,20 +54,24 @@ public class Omni12000 extends LinearOpMode {
     private DcMotor LeftBack = null;
     private DcMotor RightFront = null;
     private DcMotor RightBack = null;
+
     private Robot12000 Functions = null;
     private boolean FlippedDrive = false;
     private boolean BackUpDrive = false;
 
     //private boolean ArmMode = false;
     private double armSpeed = 1;
+
+    private int ArmTarget = 0;
     private boolean toggleReady = true;
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
     private double RobotStartAngle = 0;
     private double FieldAngle = 0;
+    private boolean MoveToTarget = true;
     private double CurrentRobotAngle = 0;
 
-    private String ArmPosition = "NORMAL"; //DOWN, PLANE, NORMAL
+    //    private String ArmPosition = "NORMAL"; //DOWN, PLANE, NORMAL
     private IMU Imu = null;
 
 
@@ -78,7 +82,7 @@ public class Omni12000 extends LinearOpMode {
     @Override
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
-        Imu = hardwareMap.get(IMU.class, "imu");
+        Imu = hardwareMap.get(IMU.class, "Eimu");
         telemetry.update();
         Functions = new Robot12000(this);
         Functions.init();
@@ -90,12 +94,13 @@ public class Omni12000 extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
        while (opModeIsActive()) {
-           double max;
+
+           double max; //Used to compare wheel power
            CurrentRobotAngle = RobotStartAngle - Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
            // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
            double axial   =  -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value --
            double lateral =  gamepad1.left_stick_x;
-           double yaw     =  gamepad1.right_stick_x;
+           double yaw     =  -gamepad1.right_stick_x;
 
            double BleftFrontPower  = axial + lateral - yaw ;
            double BrightFrontPower = -axial + lateral - yaw;
@@ -132,40 +137,48 @@ public class Omni12000 extends LinearOpMode {
 
             FieldAngle = FieldAngle + Math.PI;
 
-
-           // double FieldAngle = Math.atan(axial/lateral);
-
-
-
-           //if(lateral == 0)
-           //{
-           //    FieldAngle = 0;
-           //}
-/*
-           if(axial < 0){
-               FieldAngle += Math.PI;
-           }
-
-           if (360*FieldAngle/(2 * Math.PI) == 90)
-           {
-               FieldAngle = (270 * 2 * Math.PI) / 360;
-           }
-
-           if (360*FieldAngle/(2 * Math.PI) == -90)
-           {
-               FieldAngle = (90 * 2 * Math.PI) / 360;
-           }
-
-           if (360*FieldAngle/(2 * Math.PI) < 0)
-           {
-               double temp = 360 + 360*FieldAngle/(2 * Math.PI);
-               FieldAngle = (temp * 2 * Math.PI) / 360;
-               //FieldAngle = 360 + FieldAngle;
-           }
-            //Odom wheels 47 mm or 1 + 7/8
-            */
+            if(gamepad1.y)
+            {
+                BackUpDrive = true;
+            }
 
 
+                //ARM
+            /*if(gamepad1.dpad_up)
+            {
+                ArmTarget += 10; //Add a max being max height
+            }else if(gamepad1.dpad_down)
+            {
+                if(ArmTarget > 0){ArmTarget -= 10;} //Only lowers ArmTarget if not already 0 or lower
+            }
+
+            Functions.Arm(0.5, ArmTarget);
+
+
+            /*if(gamepad1.dpad_left)
+            {
+                ArmTarget = 0;
+            }else if(gamepad1.dpad_right)
+            {
+                //Set Max Arm Height
+            }*/
+
+            telemetry.addData("Arm location", ArmTarget);
+
+            //Old Arm Movement
+            /*if(gamepad1.dpad_up)
+            {
+                Functions.ArmPower(0.4);
+            } else if(gamepad1.dpad_down)
+            {
+                Functions.ArmPower(-0.4);
+            }else
+            {
+                Functions.ArmPower(0);
+            }*/
+
+
+           telemetry.addData("IMU Angle", Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
            telemetry.addData("Angle", 360*FieldAngle/(2 * Math.PI));
 
            double RobotAngle = FieldAngle - CurrentRobotAngle + Math.PI;
@@ -173,8 +186,6 @@ public class Omni12000 extends LinearOpMode {
            double rightFrontPower = (((Math.sin(RobotAngle) - Math.cos(RobotAngle)) * Speed) - yaw); //RF
            double leftBackPower = (((-Math.sin(RobotAngle) + Math.cos(RobotAngle)) * Speed) - yaw); //LB
            double rightBackPower = (((-Math.sin(RobotAngle) - Math.cos(RobotAngle)) * Speed) - yaw); //RB
-
-
 
            // Normalize the values so no wheel power exceeds 100%
            // This ensures that the robot maintains the desired motion.
@@ -196,23 +207,30 @@ public class Omni12000 extends LinearOpMode {
            {
                Functions.Move(BleftFrontPower, BrightFrontPower, BleftBackPower, BrightBackPower);
            }
-
-
-
-           if(gamepad1.left_bumper)
-           {
-               Functions.Arm(1);
-           }else if(gamepad1.right_bumper)
-           {
-               Functions.Arm(-1);
-           }else {
-               Functions.Arm(0);
-           }
-
            //Flip Drive-Direction
 
 
-           //ARM MODE
+           //Arm (2 part arm, arm + extension)
+           if(gamepad1.left_bumper && gamepad1.y) //Arm Out
+           {
+               Functions.SetIntakeArm(0.5);
+           } else if(gamepad1.left_bumper && gamepad1.b) //Arm In
+           {
+               Functions.SetIntakeArm(-0.5);
+           } else { //Arm Null
+               Functions.SetIntakeArm(0);
+           }
+
+
+           if(gamepad1.right_bumper && gamepad1.y) //Extension Out
+           {
+               Functions.SetIntakeExtender(1);
+           } else if(gamepad1.right_bumper && gamepad1.b) //Extension In
+           {
+               Functions.SetIntakeExtender(-1);
+           } else { //Extension Null
+               Functions.SetIntakeExtender(0);
+           }
 
 
            if(!gamepad1.x && !gamepad1.left_stick_button)
@@ -220,58 +238,16 @@ public class Omni12000 extends LinearOpMode {
                toggleReady = true;
            }
 
-           /*if(gamepad1.y && toggleReady)
-           {
-               toggleReady = false;
-               if(armSpeed == 1) {
-                   armSpeed = 0.1;
-               }else {
-                   armSpeed = 1;
-               }
-           }*/
 
-           if(gamepad1.x && gamepad1.x)
+           if(gamepad1.left_trigger > 0)
            {
-               BackUpDrive = true;
+               Functions.SetIntake(-gamepad1.left_trigger);
+           }
+           if(gamepad1.right_trigger > 0)
+           {
+               Functions.SetIntake(gamepad1.right_trigger);
            }
 
-
-           if(gamepad1.a)
-           {
-               Functions.Drone(1);
-           }
-
-           if(gamepad1.dpad_down)
-           {
-               Functions.PixelPlacer(1);
-           }
-           if(gamepad1.dpad_up)
-           {
-               Functions.PixelPlacer(-1);
-           }
-
-
-           if(gamepad1.dpad_right)
-           {
-               ArmPosition = "PLANE";
-               Functions.ArmTarget(ArmPosition);
-           }
-           if(gamepad1.dpad_left)
-           {
-               ArmPosition = "DOWN";
-               Functions.ArmTarget(ArmPosition);
-           }
-
-           if(gamepad1.b) //NOT NEEDED
-           {
-               ArmPosition = "NORMAL";
-               Functions.ArmTarget(ArmPosition);
-           }
-
-
-
-           Functions.Intake(gamepad1.right_trigger - (gamepad1.left_trigger/3));
-           //Functions.Intake(gamepad1.left_trigger);
 
 
 
@@ -279,6 +255,8 @@ public class Omni12000 extends LinearOpMode {
            {
                RobotStartAngle = Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
            }
+
+
 
            // Show the elapsed game time and wheel power.
             //telemetry.addData("ArmSpeed", armSpeed);

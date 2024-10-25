@@ -89,7 +89,7 @@ public class SampleOdometry extends LinearOpMode {
 
 
     private ElapsedTime   runtime = new ElapsedTime();
-    private double COUNTS_PER_INCH  = 2000 / (Math.PI * 1.25984);
+    private double COUNTS_PER_INCH  = (Math.PI * 1.25984) / 2000 ;
 
 
     /**
@@ -407,8 +407,8 @@ public class SampleOdometry extends LinearOpMode {
 
     public double GetDeltaAngle(double leftencoder, double rightencoder)
     {
-        //leftencoder = leftencoder * COUNTS_PER_INCH;
-        //rightencoder = rightencoder * COUNTS_PER_INCH;
+        leftencoder = leftencoder * COUNTS_PER_INCH;
+        rightencoder = rightencoder * COUNTS_PER_INCH;
         //double DeltaAngle = TrackLength * ((leftencoder + rightencoder/2)/(leftencoder-rightencoder));
         double DeltaAngle = ((leftencoder + rightencoder)/2)/TrackLength;
         return DeltaAngle;
