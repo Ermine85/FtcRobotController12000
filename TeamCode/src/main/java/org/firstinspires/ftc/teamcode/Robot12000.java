@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.robotcontroller.internal;
+package org.firstinspires.ftc.teamcode;
 //Contains Functions For OpMOde and Autonomous
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
