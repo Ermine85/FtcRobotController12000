@@ -32,10 +32,12 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.IMU;
 
 //import org.checkerframework.checker.units.qual.Angle;
+import org.firstinspires.ftc.robotcore.external.Func;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 //import org.firstinspires.ftc.robotcontroller.external.samples.RobotHardware;
@@ -57,6 +59,8 @@ public class Omni12000 extends LinearOpMode {
     //private boolean ArmMode = false;
     private double armSpeed = 1;
 
+    private double ServoPos = 0;
+
     private int ArmTarget = 0;
     private boolean toggleReady = true;
     // Declare OpMode members.
@@ -65,6 +69,8 @@ public class Omni12000 extends LinearOpMode {
     private double FieldAngle = 0;
     private boolean MoveToTarget = true;
     private double CurrentRobotAngle = 0;
+
+    private String IntakeMode = "INTAKE";
 
     //    private String ArmPosition = "NORMAL"; //DOWN, PLANE, NORMAL
     private IMU Imu = null;
@@ -77,7 +83,7 @@ public class Omni12000 extends LinearOpMode {
     @Override
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
-        Imu = hardwareMap.get(IMU.class, "Eimu");
+        Imu = hardwareMap.get(IMU.class, "imu");
         telemetry.update();
         Functions = new Robot12000(this);
         Functions.init();
@@ -95,7 +101,7 @@ public class Omni12000 extends LinearOpMode {
            // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
            double axial   =  -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value --
            double lateral =  gamepad1.left_stick_x;
-           double yaw     =  -gamepad1.right_stick_x;
+           double yaw     =  -gamepad1.right_stick_x/2;
 
            double BleftFrontPower  = axial + lateral - yaw ;
            double BrightFrontPower = -axial + lateral - yaw;
@@ -132,46 +138,12 @@ public class Omni12000 extends LinearOpMode {
 
             FieldAngle = FieldAngle + Math.PI;
 
-            if(gamepad1.y)
+            if(gamepad1.x && gamepad1.start)
             {
                 BackUpDrive = true;
             }
 
-
-                //ARM
-            /*if(gamepad1.dpad_up)
-            {
-                ArmTarget += 10; //Add a max being max height
-            }else if(gamepad1.dpad_down)
-            {
-                if(ArmTarget > 0){ArmTarget -= 10;} //Only lowers ArmTarget if not already 0 or lower
-            }
-
-            Functions.Arm(0.5, ArmTarget);
-
-
-            /*if(gamepad1.dpad_left)
-            {
-                ArmTarget = 0;
-            }else if(gamepad1.dpad_right)
-            {
-                //Set Max Arm Height
-            }*/
-
             telemetry.addData("Arm location", ArmTarget);
-
-            //Old Arm Movement
-            /*if(gamepad1.dpad_up)
-            {
-                Functions.ArmPower(0.4);
-            } else if(gamepad1.dpad_down)
-            {
-                Functions.ArmPower(-0.4);
-            }else
-            {
-                Functions.ArmPower(0);
-            }*/
-
 
            telemetry.addData("IMU Angle", Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
            telemetry.addData("Angle", 360*FieldAngle/(2 * Math.PI));
@@ -181,7 +153,6 @@ public class Omni12000 extends LinearOpMode {
            double rightFrontPower = (((Math.sin(RobotAngle) - Math.cos(RobotAngle)) * Speed) - yaw); //RF
            double leftBackPower = (((-Math.sin(RobotAngle) + Math.cos(RobotAngle)) * Speed) - yaw); //LB
            double rightBackPower = (((-Math.sin(RobotAngle) - Math.cos(RobotAngle)) * Speed) - yaw); //RB
-
            // Normalize the values so no wheel power exceeds 100%
            // This ensures that the robot maintains the desired motion.
            max = Math.max(Math.abs(leftFrontPower), Math.abs(rightFrontPower));
@@ -205,51 +176,91 @@ public class Omni12000 extends LinearOpMode {
            //Flip Drive-Direction
 
 
-           //Arm (2 part arm, arm + extension)
-           if(gamepad1.left_bumper && gamepad1.y) //Arm Out
+           if(gamepad1.a && toggleReady)
            {
-               Functions.SetIntakeArm(0.5);
-           } else if(gamepad1.left_bumper && gamepad1.b) //Arm In
-           {
-               Functions.SetIntakeArm(-0.5);
-           } else { //Arm Null
-               Functions.SetIntakeArm(0);
+               if(IntakeMode == "INTAKE"){
+                   IntakeMode = "OUTTAKE";
+               }else {IntakeMode = "INTAKE";}
+               toggleReady = false;
            }
 
-
-           if(gamepad1.right_bumper && gamepad1.y) //Extension Out
-           {
-               Functions.SetIntakeExtender(1);
-           } else if(gamepad1.right_bumper && gamepad1.b) //Extension In
-           {
-               Functions.SetIntakeExtender(-1);
-           } else { //Extension Null
-               Functions.SetIntakeExtender(0);
-           }
-
-
-           if(!gamepad1.x && !gamepad1.left_stick_button)
+           if(!gamepad1.a)
            {
                toggleReady = true;
            }
 
-
-           if(gamepad1.left_trigger > 0)
+           if(gamepad1.right_trigger > 0.1)
            {
-               Functions.SetIntake(-gamepad1.left_trigger);
-           }
-           if(gamepad1.right_trigger > 0)
+               if(IntakeMode == "INTAKE"){
+                   Functions.SetIntake(gamepad1.right_trigger/2.5);
+               }else Functions.SetIntake(-gamepad1.right_trigger/2.5);
+
+           }else if (gamepad1.left_trigger > 0.1)
            {
-               Functions.SetIntake(gamepad1.right_trigger);
+               if(IntakeMode == "INTAKE"){
+                   Functions.SetIntake(gamepad1.left_trigger);
+               }else Functions.SetIntake(-gamepad1.left_trigger);
+           }else {
+               Functions.SetIntake(0);
            }
 
 
 
 
-           if(gamepad1.start && !gamepad1.x) // Camera Pointing Away
+           telemetry.addData("Intake Mode", IntakeMode);
+
+
+           if(gamepad1.right_bumper) //Into Robot
+           {
+               if (gamepad1.b) { //Intake Arm
+                   Functions.IntakeArmP(1);
+               }else{ Functions.IntakeArmP(0);}
+
+               if(gamepad1.y){ //Horz Arm
+                   Functions.HorzArm(0.45);
+               }else{ Functions.HorzArm(0); }
+
+           }else if(gamepad1.left_bumper) //Out of Robot
+           {
+               if(gamepad1.b){ //Intake Arm
+                   Functions.IntakeArmP(-1);
+               }else{ Functions.IntakeArmP(0);}
+
+               if(gamepad1.y){ //Horz Arm
+                   Functions.HorzArm(-0.45);
+               }else{ Functions.HorzArm(0); }
+           }else {
+               Functions.HorzArm(0);
+               Functions.IntakeArmP(0);
+           }
+
+
+           if(gamepad1.start && !gamepad1.x) // Entrance U Pointing Away
            {
                RobotStartAngle = Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
            }
+
+           if(gamepad1.dpad_left)
+           {
+               Functions.Bucket(0.45);
+           }else if(gamepad1.dpad_right)
+           {
+               Functions.Bucket(1);
+           }
+
+
+           if(gamepad1.dpad_up){
+               Functions.VertArm(1);
+           }else if(gamepad1.dpad_down)
+           {
+               Functions.VertArm(-1);
+           }else {
+               Functions.VertArm(0);
+           }
+
+
+
+
 
 
 

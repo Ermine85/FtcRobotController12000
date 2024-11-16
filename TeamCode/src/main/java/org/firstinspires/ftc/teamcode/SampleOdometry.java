@@ -89,7 +89,12 @@ public class SampleOdometry extends LinearOpMode {
 
 
     private ElapsedTime   runtime = new ElapsedTime();
-    private double COUNTS_PER_INCH  = (Math.PI * 1.25984) / 2000 ;
+    private double COUNTS_PER_INCH  = (Math.PI * 1.25984) / 2000;
+
+    //Other Variables
+    private double DeltaX;
+    private double DeltaY;
+    private double DeltaA;
 
 
     /**
@@ -174,13 +179,8 @@ public class SampleOdometry extends LinearOpMode {
         double END = getRuntime() + 3;
         TargetAngle = (TargetAngle * (2 * Math.PI) / 360); //Convert target angle to radians
         AngleTolerance = AngleTolerance * (2* Math.PI/ 360); //Convert angle tolerance from degres to radians
-        RightBackARE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset encoder
-        LeftFrontALE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset encoder
-        LeftBackABE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset
-        RightBackARE.setMode(DcMotor.RunMode.RUN_USING_ENCODER); //start measuring encoders
-        LeftFrontALE.setMode(DcMotor.RunMode.RUN_USING_ENCODER); //start measuring encoders
-        LeftBackABE.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
+        ResetOdom();
 
         //Set Position
         double Crx = 0; //set robot x position to 0
@@ -191,7 +191,7 @@ public class SampleOdometry extends LinearOpMode {
 
         //double RobotYaw = StartAngle - RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS); //find current robot field orientation in radians
 
-        double RobotYaw = RobotAngle;
+        double RobotYaw = StartAngle - RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
 
         SetVector(CurrentPosition, InitialPosition.get(0), InitialPosition.get(1), RobotYaw);
 
@@ -207,54 +207,34 @@ public class SampleOdometry extends LinearOpMode {
         //while((RadiusToTarget > PositionTolerance || AngleDifference > AngleTolerance))
         while(RadiusToTarget > PositionTolerance)
         {
+            RobotYaw = StartAngle - RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+
             //RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
             //double AngleDelta = Math.atan((TargetX - CurrentPosition.get(0))/(TargetY - CurrentPosition.get(1)));
-
 
             telemetry.addData("ImuAngle", StartAngle - RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
             //Calculate robot distance and direction on robot frame of reference
 
-            double LE = LeftFrontALE.getCurrentPosition() * -1;
-            double RE = RightBackARE.getCurrentPosition() * -1;
-            double DltX = LeftBackABE.getCurrentPosition() * -1;
-
-            double DltY = (LE - RE) / 2;
-            //double DltX = BE;
-            double DltA = 0;
-            if(LE > 0 || RE > 0)
-            {
-                DltA =  GetDeltaAngle(LE, RE);
-
-            }
-
-            RobotAngle += DltA;
-
-            /*if (RobotAngle > (2 * Math.PI))
-            {
-                RobotAngle -= (2 * Math.PI);
-            }else if (RobotAngle < 0)
-            {
-                RobotAngle += (2 * Math.PI);
-            }*/
-
+            GCOV(); //Get-Current-Odom-Vaulues
 
             //Distance Traveled
-            double D1 = COUNTS_PER_INCH * Math.sqrt(Math.pow(DltX, 2) + Math.pow(DltY, 2));
-            RobotYaw = RobotAngle;
+            double D1 = COUNTS_PER_INCH * Math.sqrt(Math.pow(DeltaX, 2) + Math.pow(DeltaY, 2));
 
-            double Theta1 = Math.atan(DltY/DltX);  //- (Math.PI / 4.0);
+
+            if (DeltaX == 0) DeltaX = 0.0001; //Stops from dividing by 0
+
+            double Theta1 = Math.atan(DeltaY/DeltaX);  //- (Math.PI / 4.0);
             telemetry.addData("Raw Robot Theta",Theta1);
             //Display "Angle"
 
-
-            if (DltX == 0 && DltY >= 0) {
+            if (DeltaX == 0.0001 && DeltaY >= 0) {
                 Theta1 = Math.PI / 4;
-            } else if (DltX == 0 && DltY < 0) {
+            } else if (DeltaX == 0.0001 && DeltaY < 0) {
                 Theta1 = 5 * Math.PI / 4;
             }
 
             //Account for issue with arctan since it only returns 0-PI
-            if (DltX < 0) {
+            if (DeltaX < 0) {
                 Theta1 = Theta1 + Math.PI;
             }
             //Calculate Robot frame of reference X and Y distance moved
@@ -263,15 +243,15 @@ public class SampleOdometry extends LinearOpMode {
 
             //Convert distance and direction from robot frame of reference to field frame of reference
             //Angle of robot movement in field reference
-            ThetaF = Theta1 + RobotAngle;  // Remove RobotYaw for now
+            ThetaF = Theta1 + RobotYaw;  // Remove RobotYaw for now
             //Distance robot has moved in x-direction
             double Dfx = Math.sin(ThetaF) * D1;
             //Distance robot has moved in y-direction
             double Dfy = Math.cos(ThetaF) * D1;
 
             //track current position
-            Crx = Crx + DltX;
-            Cry = Cry + DltY;
+            Crx = Crx + DeltaX;
+            Cry = Cry + DeltaY;
             Cfx = Cfx + Dfx;
             Cfy = Cfy + Dfy;
 
@@ -284,20 +264,19 @@ public class SampleOdometry extends LinearOpMode {
             //sleep(2000);
 
             //Calculate distance X and Y from target - negative to flip the coordinate system
-            double DeltaX = (TargetX - Cfx);
-            double DeltaY = (TargetY - Cfy);
-
-            //calculate distance from target
-            RadiusToTarget = Math.sqrt(Math.pow(DeltaX, 2) + Math.pow(DeltaY, 2));
+            double DltX = (TargetX - Cfx);
+            double DltY = (TargetY - Cfy);
+            //find Radius to the targets
+            RadiusToTarget = Math.sqrt(Math.pow(DltX, 2) + Math.pow(DltY, 2));
             //Calculate direction to target
-            if (DeltaY == 0)  DeltaY = 0.001;
+            if (DltY == 0)  DltY = 0.001; //make sure not to divide by 0
 
-            double Ttf = Math.atan(DeltaX / DeltaY);
+            double Ttf = Math.atan(DltX / DltY);
 
-            if (DeltaY < 0) {
+            if (DltX < 0) {
                 Ttf = Ttf + Math.PI;
             }
-            if (DeltaY > 0){
+            if (DltY > 0){
                 //Do nothing
             }
 
@@ -308,7 +287,7 @@ public class SampleOdometry extends LinearOpMode {
 
             //RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
 
-            //RobotAngle =  Ttf - RobotYaw;
+            RobotAngle =  Ttf - RobotYaw;
 
             AngleDifference = Math.abs(TargetAngle-RobotYaw);
             //Motor Speed
@@ -343,43 +322,15 @@ public class SampleOdometry extends LinearOpMode {
                 M4 = M4/Mmax;
             }
 
-            /*LeftFrontALE.setPower(M1 * Speed);
+            LeftFrontALE.setPower(M1 * Speed);
             RightFront.setPower(M2 * Speed);
             LeftBackABE.setPower(M3 * Speed);
-            RightBackARE.setPower(M4 * Speed);*/
+            RightBackARE.setPower(M4 * Speed);
 
-            // RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
+            GCOV(); //Get-Current-Odom-Values
 
-
-            LE = LeftFrontALE.getCurrentPosition() * -1;
-            RE = RightBackARE.getCurrentPosition() * -1;
-            DltX = LeftBackABE.getCurrentPosition() * -1;
-
-            DltY = (LE - RE) / 2;
-            //double DltX = BE;
-            if(LE > 0 || RE > 0)
-            {
-                DltA =  GetDeltaAngle(LE,RE);
-            }
-
-            RobotAngle = RobotAngle + DltA;
-
-
-
-
-            //double DeltaX = (RightEncoder.getCurrentPosition() * Math.cos(Math.PI/4 + RobotYaw)) - (LeftEncoder.getCurrentPosition() * Math.cos(Math.PI/4 - RobotYaw));
-            //double DeltaY = (RightEncoder.getCurrentPosition() * Math.sin(Math.PI/4 + RobotYaw)) + (LeftEncoder.getCurrentPosition() * Math.sin(Math.PI/4 - RobotYaw));
-
-            //SetVector(CurrentPosition, CurrentPosition.get(0) + (DltX * COUNTS_PER_INCH), CurrentPosition.get(1) + (DltY * COUNTS_PER_INCH), RobotAngle);
-            RightBackARE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            LeftFrontALE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            LeftBackABE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            RightBackARE.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            LeftFrontALE.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            LeftBackABE.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-
-
+            //SetVector(CurrentPosition, CurrentPosition.get(0) + (DeltaX * COUNTS_PER_INCH), CurrentPosition.get(1) + (DeltaX * COUNTS_PER_INCH), RobotYaw);
+            ResetOdom();
 
             //ThetaF = (ThetaF * 360) / (2 * Math.PI);
         }
@@ -412,6 +363,27 @@ public class SampleOdometry extends LinearOpMode {
         //double DeltaAngle = TrackLength * ((leftencoder + rightencoder/2)/(leftencoder-rightencoder));
         double DeltaAngle = ((leftencoder + rightencoder)/2)/TrackLength;
         return DeltaAngle;
+    }
+
+    public void ResetOdom()
+    {
+        RightBackARE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset encoder
+        LeftFrontALE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset encoder
+        LeftBackABE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset
+        RightBackARE.setMode(DcMotor.RunMode.RUN_USING_ENCODER); //start measuring encoders
+        LeftFrontALE.setMode(DcMotor.RunMode.RUN_USING_ENCODER); //start measuring encoders
+        LeftBackABE.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+
+    public void GCOV() //GetCurrentOdomValues
+    {
+        double LE = LeftFrontALE.getCurrentPosition() * -1;
+        double RE = RightBackARE.getCurrentPosition() * -1;
+        DeltaX = LeftBackABE.getCurrentPosition() * -1;
+
+        DeltaY = (LE - RE) / 2;
+        //double DltX = BE;
+
     }
 }   // end class
 // around the world x100000, 14000000 BPM is the craziest of all crazies

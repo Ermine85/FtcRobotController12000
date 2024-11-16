@@ -37,14 +37,11 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 //import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.vision.VisionPortal;
 //import org.firstinspires.ftc.vision.tfod.TfodProcessor;
 
-import java.util.List;
 import java.util.Vector;
 
 /*
@@ -56,7 +53,7 @@ import java.util.Vector;
  */
 @Autonomous(name = "Red-Audience", group = "Concept")
 // @Disabled
-public class RedAudience12000 extends LinearOpMode {
+public class RedAuto extends LinearOpMode {
 
     private static final boolean USE_WEBCAM = true;  // true for webcam, false for phone camera
 
@@ -90,6 +87,10 @@ public class RedAudience12000 extends LinearOpMode {
     private ElapsedTime   runtime = new ElapsedTime();
     private double COUNTS_PER_INCH  = (((((2.0 * Math.PI * 2.0) / 8192.0) * 2.54 * 18.0) / 70.0) / 18.0 * 28.0) ; // 2pi * wheel radios / encoder tpr
 
+    //Other Variables
+    private double DeltaX;
+    private double DeltaY;
+    private double DeltaA;
 
     /**
      * The variable to store our instance of the TensorFlow Object Detection processor.
@@ -180,6 +181,7 @@ public class RedAudience12000 extends LinearOpMode {
         double Cry = 0; //set robot y position to 0
         double Cfx = InitialPosition.get(0); //set current field position x to last known position
         double Cfy = InitialPosition.get(1); //set current field position y to last known position
+
         double RobotYaw = StartAngle - RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS); //find current robot field orientation in radians
 
 
@@ -357,14 +359,7 @@ public class RedAudience12000 extends LinearOpMode {
         vector.add(angle);
     }
 
-    public void PlacePixel(int time, double speed)
-    {
-        PixelServo.setPower(-speed);
-        sleep(time);
-        PixelServo.setPower(speed);
-        sleep(time/3);
-        PixelServo.setPower(0);
-    }
+
 
 }   // end class
 // around the world x100000, 14000000 BPM is the craziest of all crazies

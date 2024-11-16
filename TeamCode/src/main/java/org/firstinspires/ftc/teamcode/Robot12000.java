@@ -6,6 +6,8 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
+
 public class Robot12000 {
     //Wheel Motors (6 total -- 4 omni -- 2 normal) ~Change to 4 mecanum later~
     //Distance per inch (encoder)
@@ -17,10 +19,14 @@ public class Robot12000 {
 
     private DcMotor LeftArm = null;
     private DcMotor RightArm = null;
-    private DcMotor IntakeArm = null;
-    private CRServo IntakeExtender = null;
+    private DcMotor HorizontalArm = null;
 
+    private DcMotor IntakeArm = null;
     private CRServo Intake = null;
+
+    private Servo BucketServo = null;
+
+
 
 
     //Uncomment when implemented
@@ -48,13 +54,16 @@ public class Robot12000 {
         LeftArm = OpMode.hardwareMap.get(DcMotor.class, "arm_left");
         RightArm = OpMode.hardwareMap.get(DcMotor.class, "arm_right");
         //Intake
+        HorizontalArm = OpMode.hardwareMap.get(DcMotor.class, "horizontal_arm");
         IntakeArm = OpMode.hardwareMap.get(DcMotor.class, "intake_arm");
-        IntakeExtender = OpMode.hardwareMap.get(CRServo.class, "intake_extender");
 
-        //LeftArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        RightArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+
+        LeftArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        RightArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         //Servos
         Intake = OpMode.hardwareMap.get(CRServo.class, "intake");
+        BucketServo = OpMode.hardwareMap.get(Servo.class, "bucket_servo");
         //IMU
         RobotIMU = OpMode.hardwareMap.get(IMU.class, "imu");
 
@@ -82,10 +91,9 @@ public class Robot12000 {
 
     }
     //Arm Function(s)
-    public void ArmPower(double power) //Run Without Encoder
+    public void VertArm(double power) //Run Without Encoder
     {
-        RightArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        LeftArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         LeftArm.setPower(power); //Sets both arms to power
         RightArm.setPower(power);
     }
@@ -119,32 +127,13 @@ public class Robot12000 {
         Intake.setPower(power);
     }
 
-    void SetIntakeArm(double power)
+
+    void HorzArm(double power)
     {
-        IntakeArm.setPower(power);
+        HorizontalArm.setPower(power);
     }
 
+    void Bucket(double pos) { BucketServo.setPosition(pos); }
 
-    void SetIntakeExtender(double power){
-        IntakeExtender.setPower(power);
-    }
-
-    /* void SpecificIntake(String color, double power) //Intake with implemented color sensor checking
-    {
-        Intake.setPower(power);
-
-        if(color == "BLUE") //if color is blue
-        {
-
-        }
-
-        if(color == "RED")
-        {
-
-        }
-
-    }*/ //Intake W/ Color
-
-
-
+    void IntakeArmP(double power) { IntakeArm.setPower(power); }
 }
