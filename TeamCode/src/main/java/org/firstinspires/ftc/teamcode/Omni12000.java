@@ -217,7 +217,7 @@ public class Omni12000 extends LinearOpMode {
                }else{ Functions.IntakeArmP(0);}
 
                if(gamepad1.y){ //Horz Arm
-                   Functions.HorzArm(0.45);
+                   Functions.HorzArm(1);
                }else{ Functions.HorzArm(0); }
 
            }else if(gamepad1.left_bumper) //Out of Robot
@@ -227,7 +227,7 @@ public class Omni12000 extends LinearOpMode {
                }else{ Functions.IntakeArmP(0);}
 
                if(gamepad1.y){ //Horz Arm
-                   Functions.HorzArm(-0.45);
+                   Functions.HorzArm(-1);
                }else{ Functions.HorzArm(0); }
            }else {
                Functions.HorzArm(0);
@@ -242,7 +242,7 @@ public class Omni12000 extends LinearOpMode {
 
            if(gamepad1.dpad_left)
            {
-               Functions.Bucket(0.45);
+               Functions.Bucket(0);
            }else if(gamepad1.dpad_right)
            {
                Functions.Bucket(1);

@@ -32,6 +32,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -120,18 +121,14 @@ public class SampleOdometry extends LinearOpMode {
         RightFront = hardwareMap.get(DcMotor.class, "right_front");
         LeftBackABE = hardwareMap.get(DcMotor.class, "left_back");
         RightBackARE = hardwareMap.get(DcMotor.class, "right_back");
-        //RightEncoder = hardwareMap.get(DcMotor.class, "right_odom"); //Change to motor slot if used by another motor
-        //LeftEncoder = hardwareMap.get(DcMotor.class, "left_odom"); //Change to motor slot if used by another motor
-        //BackEncoder = hardwareMap.get(DcMotor.class, "back_odom"); //Change to motor slot if used by another motor
-        //PixelServo = hardwareMap.get(CRServo.class, "pixel_servo");
-        //colorSensor = hardwareMap.get(ColorSensor.class, "color1");
+
 
         RobotIMU = hardwareMap.get(IMU.class, "imu");
 
         LeftFrontALE.setDirection(DcMotor.Direction.FORWARD);
-        LeftBackABE.setDirection(DcMotor.Direction.FORWARD);
+        LeftBackABE.setDirection(DcMotor.Direction.REVERSE);
         RightFront.setDirection(DcMotor.Direction.FORWARD);
-        RightBackARE.setDirection(DcMotor.Direction.FORWARD);
+        RightBackARE.setDirection(DcMotor.Direction.REVERSE);
 
         StartAngle = RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
 
@@ -212,7 +209,8 @@ public class SampleOdometry extends LinearOpMode {
             //RB = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
             //double AngleDelta = Math.atan((TargetX - CurrentPosition.get(0))/(TargetY - CurrentPosition.get(1)));
 
-            telemetry.addData("ImuAngle", StartAngle - RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+            telemetry.addData("ImuAngle", RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+            telemetry.addData("ROBOTYAW", RobotYaw);
             //Calculate robot distance and direction on robot frame of reference
 
             GCOV(); //Get-Current-Odom-Vaulues
@@ -243,7 +241,7 @@ public class SampleOdometry extends LinearOpMode {
 
             //Convert distance and direction from robot frame of reference to field frame of reference
             //Angle of robot movement in field reference
-            ThetaF = Theta1 + RobotYaw;  // Remove RobotYaw for now
+            ThetaF = Theta1;// + RobotYaw;  // Remove RobotYaw for now
             //Distance robot has moved in x-direction
             double Dfx = Math.sin(ThetaF) * D1;
             //Distance robot has moved in y-direction
@@ -322,10 +320,10 @@ public class SampleOdometry extends LinearOpMode {
                 M4 = M4/Mmax;
             }
 
-            LeftFrontALE.setPower(M1 * Speed);
+            /*LeftFrontALE.setPower(M1 * Speed);
             RightFront.setPower(M2 * Speed);
             LeftBackABE.setPower(M3 * Speed);
-            RightBackARE.setPower(M4 * Speed);
+            RightBackARE.setPower(M4 * Speed);*/
 
             GCOV(); //Get-Current-Odom-Values
 
@@ -378,10 +376,10 @@ public class SampleOdometry extends LinearOpMode {
     public void GCOV() //GetCurrentOdomValues
     {
         double LE = LeftFrontALE.getCurrentPosition() * -1;
-        double RE = RightBackARE.getCurrentPosition() * -1;
-        DeltaX = LeftBackABE.getCurrentPosition() * -1;
+        double RE = RightBackARE.getCurrentPosition() * 1;
+        DeltaX = LeftBackABE.getCurrentPosition() * 1;
 
-        DeltaY = (LE - RE) / 2;
+        DeltaY = ((LE - RE) / 2);
         //double DltX = BE;
 
     }

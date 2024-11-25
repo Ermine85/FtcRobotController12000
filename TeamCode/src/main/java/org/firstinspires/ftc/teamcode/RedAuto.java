@@ -34,6 +34,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -122,9 +123,9 @@ public class RedAuto extends LinearOpMode {
         RobotIMU = hardwareMap.get(IMU.class, "imu");
 
         LeftFront.setDirection(DcMotor.Direction.FORWARD);
-        LeftBack.setDirection(DcMotor.Direction.FORWARD);
+        LeftBack.setDirection(DcMotor.Direction.REVERSE);
         RightFront.setDirection(DcMotor.Direction.FORWARD);
-        RightBack.setDirection(DcMotor.Direction.FORWARD);
+        RightBack.setDirection(DcMotor.Direction.REVERSE);
         StartAngle = RobotIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
         StartVector(InitialPosition, 0, 0, 10); // might want to be SetVector
         StartVector(CurrentPosition, 0, 0,10);  // ^
@@ -173,6 +174,8 @@ public class RedAuto extends LinearOpMode {
         double END = getRuntime() + 3;
         TargetAngle = (TargetAngle * (2 * Math.PI) / 360); //Convert target angle to radians
         AngleTolerance = AngleTolerance * (2* Math.PI/ 360); //Convert angle tolerance from degres to radians
+
+
         RightEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset encoder
         LeftEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset encoder
         RightEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER); //start measuring encoders

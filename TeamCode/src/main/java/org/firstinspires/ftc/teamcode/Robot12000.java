@@ -19,10 +19,10 @@ public class Robot12000 {
 
     private DcMotor LeftArm = null;
     private DcMotor RightArm = null;
-    private DcMotor HorizontalArm = null;
+    private CRServo HorizontalArm = null;
 
     private DcMotor IntakeArm = null;
-    private CRServo Intake = null;
+    private DcMotor Intake = null;
 
     private Servo BucketServo = null;
 
@@ -54,7 +54,7 @@ public class Robot12000 {
         LeftArm = OpMode.hardwareMap.get(DcMotor.class, "arm_left");
         RightArm = OpMode.hardwareMap.get(DcMotor.class, "arm_right");
         //Intake
-        HorizontalArm = OpMode.hardwareMap.get(DcMotor.class, "horizontal_arm");
+        HorizontalArm = OpMode.hardwareMap.get(CRServo.class, "horizontal_arm");
         IntakeArm = OpMode.hardwareMap.get(DcMotor.class, "intake_arm");
 
 
@@ -62,7 +62,7 @@ public class Robot12000 {
         LeftArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         RightArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         //Servos
-        Intake = OpMode.hardwareMap.get(CRServo.class, "intake");
+        Intake = OpMode.hardwareMap.get(DcMotor.class, "intake");
         BucketServo = OpMode.hardwareMap.get(Servo.class, "bucket_servo");
         //IMU
         RobotIMU = OpMode.hardwareMap.get(IMU.class, "imu");
