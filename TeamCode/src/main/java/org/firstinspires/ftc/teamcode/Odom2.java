@@ -85,17 +85,23 @@ public class Odom2 extends LinearOpMode {
 
     private Vector<Double> PreviousEncoder = new Vector<>(3);
     private double FinalDistance = 0;
+
+    private double PreviousIMU = 0;
     private IMU RobotIMU = null;
     private double StartAngle = 0; //setting starting robot orientation in radians
 
 
     private ElapsedTime   runtime = new ElapsedTime();
-    private double COUNTS_PER_INCH  = (((((2.0 * Math.PI * 2.0) / 8192.0) * 2.54 * 18.0) / 70.0) / 18.0 * 28.0) ; // 2pi * wheel radios / encoder tpr
+    private double COUNTS_PER_INCH  = ((Math.PI * 1.25984 * 36) / (2000 * 40));
+    //private double COUNTS_PER_INCH  = (((((2.0 * Math.PI * 2.0) / 8192.0) * 2.54 * 18.0) / 70.0) / 18.0 * 28.0) ; // 2pi * wheel radios / encoder tpr
 
     //Other Variables
     private double DeltaX;
     private double DeltaY;
     private double DeltaA;
+
+    private double TrackLength = 12.5; //diameter between Left Encoder and Right
+    private double BackRadius = 5; //distance between back wheel and the center of L & R
 
     /**
      * The variable to store our instance of the TensorFlow Object Detection processor.
@@ -119,7 +125,7 @@ public class Odom2 extends LinearOpMode {
 
 
         RobotIMU = hardwareMap.get(IMU.class, "imu");
-
+        //Start Encoders
         LeftFrontALE.setDirection(DcMotor.Direction.REVERSE);
         LeftBackABE.setDirection(DcMotor.Direction.FORWARD);
         RightFront.setDirection(DcMotor.Direction.REVERSE);
@@ -139,7 +145,7 @@ public class Odom2 extends LinearOpMode {
 
         StartVector(InitialPosition, 0, 0, 10);
         StartVector(CurrentPosition, 0, 0,10);  // ^
-        StartVector(Tolerance, 1, 5, 1000); //1000 nulls 3rd spot (tolerance only has 2 spots)
+        StartVector(Tolerance, 1, 0.5, 1000); //1000 nulls 3rd spot (tolerance only has 2 spots)
         StartVector(PreviousEncoder, 0, 0, 0); //Holds previous encoder counts
 
 
@@ -151,7 +157,20 @@ public class Odom2 extends LinearOpMode {
 
             StartAngle = Yaw(true);
             sleep(2000);
-            MoveTo(10,15,0,0.5);
+            /*MoveTo(5,-21,0,0.6);
+            sleep(2000);
+            MoveTo(-40,0,0,0.6);*/
+
+            MoveTo(-20, -21,0,0.5);
+            sleep(2000);
+            MoveTo(5,-5,98,0.5);
+            sleep(2000);
+            MoveTo(5,-45,0,0.5);
+            sleep(2000);
+            MoveTo(-3,-46,0,0.5);
+
+
+
         }
 
 
@@ -161,23 +180,29 @@ public class Odom2 extends LinearOpMode {
 
     public void MoveTo(double TargetX, double TargetY, double TargetAngle, double Speed)
     {
-         //Start with Odoms at 0
-        //Position Variables
+        //TargetAngle = (TargetAngle * (2 * Math.PI) / 360); //Convert target angle to radians
+        //double AngleTolerance = Tolerance.get(1) * (2* Math.PI/ 360); //converts tolerance angle from tolerance vector
+        //Start with Odoms at 0
+
+        double AngleOff = TargetAngle;//Position Variables
         double Crx = 0; //current robot x
         double Cry = 0; //current robot y
         double Cfx = InitialPosition.get(0); //Initial tracks field Pos
         double Cfy = InitialPosition.get(1);
 
+        SetVector(CurrentPosition, InitialPosition.get(0), InitialPosition.get(1), InitialPosition.get(2));
         //Robot Angle and Total Distance to Target
         double RobotYaw = StartAngle - Yaw(true);
         double ThetaF = RobotYaw;
         double RadiusToTarget = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2 ) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
-
-        while(RadiusToTarget > Tolerance.get(0)) //Total Distance greater than tolerance position
+        double StartingR = RadiusToTarget;
+        double StartingSpeed = Speed;
+        while(RadiusToTarget > Tolerance.get(0) || Math.abs(AngleOff) > Tolerance.get(1)) //Total Distance greater than tolerance position
         {
             RobotYaw = StartAngle - Yaw(true);
             //Gets Odometer values (Sets DeltaX and DeltaY)
             GCOV();
+            AngleOff = AngleOff - DeltaA;
             //Tracks total distance Traveled
             double TotalDistance = COUNTS_PER_INCH * Math.sqrt(Math.pow(DeltaX, 2) + Math.pow(DeltaY, 2));
             //Get the angle moved based off of robot (Theta Robot)
@@ -223,14 +248,17 @@ public class Odom2 extends LinearOpMode {
             Ttf = Ttf + Math.PI;
 
             double RobotAngle =  Ttf - RobotYaw; //Gets the angle the robot needs to move
+            //SpeedRange
 
-            SetWheels(RobotAngle, RobotYaw, Speed);
+
+            SetWheels(RobotAngle, RobotYaw, Speed, AngleOff);
 
             telemetry.addData("X", Cfx);
             telemetry.addData("Y", Cfy);
             telemetry.addData("R", RadiusToTarget);
 
             telemetry.addLine();
+            telemetry.addData("Angle Off", AngleOff);
             telemetry.addData("RobotYawVar", RobotYaw * 180/Math.PI);
             telemetry.addData("Yaw", Yaw(false));
             telemetry.update();
@@ -271,9 +299,18 @@ public class Odom2 extends LinearOpMode {
     {
         double LE = LeftFrontALE.getCurrentPosition() - PreviousEncoder.get(0);
         double RE = RightBackARE.getCurrentPosition() - PreviousEncoder.get(1);
-        DeltaX = LeftBackABE.getCurrentPosition() - PreviousEncoder.get(2);
+        double BE = LeftBackABE.getCurrentPosition() - PreviousEncoder.get(2);
+        DeltaX = BE - (BackRadius/(TrackLength/2)) * (RE - LE);
+
+        if(LE - RE == 0)
+        {
+            LE = 0.0000000001;
+        }
+
+        DeltaA = (360*125)/(((2 * Math.PI * (TrackLength/2))/((LE-RE) * COUNTS_PER_INCH)) * 180);
 
         DeltaY = ((LE + RE) / 2);
+
         //double DltX = BE;
         SetVector(PreviousEncoder, LeftFrontALE.getCurrentPosition(), RightBackARE.getCurrentPosition(), LeftBackABE.getCurrentPosition());
 
@@ -288,13 +325,20 @@ public class Odom2 extends LinearOpMode {
 
     }
 
-    public void SetWheels(double RobotAngle, double RobotYaw, double Speed) //Angle Not accounted For
+    public void SetWheels(double RobotAngle, double RobotYaw, double Speed, double AngleOff) //Angle Not accounted For
     {
-        double F = 1;                                 //ADD + 0.5*(RobotYaw - TargetAngle)
-        double M1 = F*(Math.sin(RobotAngle) + Math.cos(RobotAngle));//LF
-        double M2 = F*(Math.sin(RobotAngle) - Math.cos(RobotAngle));//RF
-        double M3 = F*(-Math.sin(RobotAngle) + Math.cos(RobotAngle));//LB
-        double M4 = F*(-Math.sin(RobotAngle) - Math.cos(RobotAngle)); //RB
+        if(AngleOff > 5)
+        {
+            AngleOff = 5;
+        }else if(AngleOff < -5)
+        {
+            AngleOff = -5;
+        }
+        double F = 1;//ADD + 0.5*(RobotYaw - TargetAngle)
+        double M1 = F*(Math.sin(RobotAngle) + Math.cos(RobotAngle))+ (0.05 * -AngleOff); //LF
+        double M2 = F*(Math.sin(RobotAngle) - Math.cos(RobotAngle))+ (0.05 * -AngleOff);//RF
+        double M3 = F*(-Math.sin(RobotAngle) + Math.cos(RobotAngle))+ (0.05 * -AngleOff);//LB
+        double M4 = F*(-Math.sin(RobotAngle) - Math.cos(RobotAngle)) + (0.05 * -AngleOff);//RB
         double Mmax;
         //Gets the Highest Value of the 4
         Mmax = Math.max(M1, M2);
@@ -308,6 +352,7 @@ public class Odom2 extends LinearOpMode {
             M3 = M3/Mmax;
             M4 = M4/Mmax;
         }
+
         //Sets Motors Power to the powers above
         LeftFrontALE.setPower(M1 * Speed);
         RightFront.setPower(M2 * Speed);

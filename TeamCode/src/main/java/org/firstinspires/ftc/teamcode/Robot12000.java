@@ -25,6 +25,7 @@ public class Robot12000 {
     private DcMotor Intake = null;
 
     private Servo BucketServo = null;
+    private Servo ClawServo = null;
 
 
 
@@ -64,6 +65,7 @@ public class Robot12000 {
         //Servos
         Intake = OpMode.hardwareMap.get(DcMotor.class, "intake");
         BucketServo = OpMode.hardwareMap.get(Servo.class, "bucket_servo");
+        ClawServo = OpMode.hardwareMap.get(Servo.class, "claw");
         //IMU
         RobotIMU = OpMode.hardwareMap.get(IMU.class, "imu");
 
@@ -136,4 +138,9 @@ public class Robot12000 {
     void Bucket(double pos) { BucketServo.setPosition(pos); }
 
     void IntakeArmP(double power) { IntakeArm.setPower(power); }
+
+    void ClawServo(double pos)
+    {
+        ClawServo.setPosition(pos);
+    }
 }

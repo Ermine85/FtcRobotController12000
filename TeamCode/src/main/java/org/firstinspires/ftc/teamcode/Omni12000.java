@@ -184,6 +184,7 @@ public class Omni12000 extends LinearOpMode {
                toggleReady = false;
            }
 
+
            if(!gamepad1.a)
            {
                toggleReady = true;
@@ -242,10 +243,12 @@ public class Omni12000 extends LinearOpMode {
 
            if(gamepad1.dpad_left)
            {
-               Functions.Bucket(0);
+               //Functions.Bucket(0);
+               Functions.ClawServo(0.25);
            }else if(gamepad1.dpad_right)
            {
-               Functions.Bucket(1);
+               //Functions.Bucket(1);
+               Functions.ClawServo(0.6);
            }
 
 

@@ -86,6 +86,7 @@ public class SampleOdometry extends LinearOpMode {
     private double RobotAngle = 0;
 
     private double TrackLength = 12.5; //Track-Length;
+    private double BackRadius = 5;
     private double StartAngle = 0; //setting starting robot orientation in radians
 
 
