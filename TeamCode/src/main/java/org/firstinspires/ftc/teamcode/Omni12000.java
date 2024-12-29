@@ -29,16 +29,28 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import android.graphics.Color;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 
 //import org.checkerframework.checker.units.qual.Angle;
 import org.firstinspires.ftc.robotcore.external.Func;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+
+import java.security.PrivateKey;
+import java.sql.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 //import org.firstinspires.ftc.robotcontroller.external.samples.RobotHardware;
 
@@ -51,6 +63,9 @@ public class Omni12000 extends LinearOpMode {
     private DcMotor LeftBack = null;
     private DcMotor RightFront = null;
     private DcMotor RightBack = null;
+
+    private ColorSensor ColorSensor = null;
+    private TouchSensor touch = null;
 
     private Robot12000 Functions = null;
     private boolean FlippedDrive = false;
@@ -70,6 +85,8 @@ public class Omni12000 extends LinearOpMode {
     private boolean MoveToTarget = true;
     private double CurrentRobotAngle = 0;
 
+    private boolean ClawOpen = false;
+
     private String IntakeMode = "INTAKE";
 
     //    private String ArmPosition = "NORMAL"; //DOWN, PLANE, NORMAL
@@ -80,6 +97,15 @@ public class Omni12000 extends LinearOpMode {
     //Robot12000 RobotFunctions = new Robot12000(this);
 
     public Thread slowIntakeThread = null;
+    public static double findLargest(double[] array) {
+        double max = array[0];
+        for (int i = 1; i < array.length; i++) {
+            if (array[i] > max) {
+                max = array[i];
+            }
+        }
+        return max;
+    }
     @Override
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
@@ -93,8 +119,51 @@ public class Omni12000 extends LinearOpMode {
         waitForStart();
         runtime.reset();
 
+        ColorSensor = hardwareMap.get(ColorSensor.class, "ColorSensor");
+        touch = hardwareMap.get(TouchSensor.class, "SlideTouch");
+
+        List<Integer> list = new ArrayList<>();
+        List<Integer> GreenList = new ArrayList<>();
+        List<Integer> BlueList = new ArrayList<>();
+
+
+
+        // Define the task to add red color sensor data to the list
+
         // run until the end of the match (driver presses STOP)
        while (opModeIsActive()) {
+           telemetry.addData("Current color: ", ColorSensor.argb());
+           telemetry.addData("Color red: ", ColorSensor.red());
+           telemetry.addData("Color blue: ", ColorSensor.blue());
+           telemetry.addData("Color green: ", ColorSensor.green());
+
+           double[] empty = {74, 120, 120};
+           double[] red = {896, 170, 407};
+           double[] blue = {179, 867, 365};
+           double[] yellow = {1386, 363, 1724};
+
+           double deltaE = Math.sqrt((Math.pow(empty[0] - ColorSensor.red(),2) + (Math.pow(empty[1] - ColorSensor.blue(),2)) + (Math.pow(empty[2] - ColorSensor.green(),2)) ));
+           double deltaR = Math.sqrt((Math.pow(red[0] - ColorSensor.red(),2) + (Math.pow(red[1] - ColorSensor.blue(),2)) + (Math.pow(red[2] - ColorSensor.green(),2)) ));
+           double deltaB = Math.sqrt((Math.pow(blue[0] - ColorSensor.red(),2) + (Math.pow(blue[1] - ColorSensor.blue(),2)) + (Math.pow(blue[2] - ColorSensor.green(),2)) ));
+           double deltaY = Math.sqrt((Math.pow(yellow[0] - ColorSensor.red(),2) + (Math.pow(yellow[1] - ColorSensor.blue(),2)) + (Math.pow(yellow[2] - ColorSensor.green(),2)) ));
+
+           double emptyConfidence = 1 - (deltaE/3)*((1 / (deltaE + deltaR)) + (1/((deltaE + deltaB))) + (1/(deltaE + deltaY)));
+           double redConfidence = 1 - (deltaR/3)*((1 / (deltaR + deltaE)) + (1/((deltaR + deltaB))) + (1/(deltaR + deltaY)));
+           double blueConfidence = 1 - (deltaB/3)*((1 / (deltaB + deltaE)) + (1/((deltaB + deltaE))) + (1/(deltaB + deltaY)));
+           double yellowConfidence = 1 - (deltaY/3)*((1 / (deltaY + deltaE)) + (1/((deltaY + deltaE))) + (1/(deltaY + deltaE)));
+            double[] confidenceValues = {emptyConfidence,redConfidence,blueConfidence,yellowConfidence};
+           double largestConfidence = findLargest(confidenceValues);
+
+           if(emptyConfidence == largestConfidence){
+               telemetry.addData("The box is empty ", "");
+           } else if (redConfidence == largestConfidence) {
+               telemetry.addData("The cube is red ", "");
+           } else if (blueConfidence == largestConfidence) {
+               telemetry.addData("The cube is blue ", "");
+           } else if (yellowConfidence == largestConfidence) {
+               telemetry.addData("The cube is Yellow ", "");
+           }
+
 
            double max; //Used to compare wheel power
            CurrentRobotAngle = RobotStartAngle - Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
@@ -185,7 +254,7 @@ public class Omni12000 extends LinearOpMode {
            }
 
 
-           if(!gamepad1.a)
+           if(!gamepad1.a  && !gamepad1.x)
            {
                toggleReady = true;
            }
@@ -193,20 +262,32 @@ public class Omni12000 extends LinearOpMode {
            if(gamepad1.right_trigger > 0.1)
            {
                if(IntakeMode == "INTAKE"){
-                   Functions.SetIntake(gamepad1.right_trigger/2.5);
-               }else Functions.SetIntake(-gamepad1.right_trigger/2.5);
+                   Functions.SetIntake(-gamepad1.right_trigger/3);
+               }else Functions.SetIntake(gamepad1.right_trigger/3);
 
            }else if (gamepad1.left_trigger > 0.1)
            {
                if(IntakeMode == "INTAKE"){
-                   Functions.SetIntake(gamepad1.left_trigger);
-               }else Functions.SetIntake(-gamepad1.left_trigger);
+                   Functions.SetIntake(-gamepad1.left_trigger/2);
+               }else Functions.SetIntake(gamepad1.left_trigger/2);
            }else {
                Functions.SetIntake(0);
            }
 
+           if(gamepad1.x && toggleReady)
+           {
+               if(ClawOpen)
+               {
+                   Functions.ClawServo(0.75);
+                   ClawOpen = false;
+               } else {
+                   Functions.ClawServo(0.25);
+                   ClawOpen = true;
+               }
+               toggleReady = false;
+           }
 
-
+           telemetry.addData("Claw Open", ClawOpen);
 
            telemetry.addData("Intake Mode", IntakeMode);
 
@@ -241,14 +322,12 @@ public class Omni12000 extends LinearOpMode {
                RobotStartAngle = Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
            }
 
-           if(gamepad1.dpad_left)
+           if(gamepad1.dpad_left || gamepad2.dpad_right)
            {
-               //Functions.Bucket(0);
-               Functions.ClawServo(0.25);
-           }else if(gamepad1.dpad_right)
-           {
-               //Functions.Bucket(1);
-               Functions.ClawServo(0.6);
+               Functions.Bucket(-0.2);
+               //Functions.ClawServo(0.6);
+           }else{
+               Functions.Bucket(0);
            }
 
 

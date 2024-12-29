@@ -24,8 +24,9 @@ public class Robot12000 {
     private DcMotor IntakeArm = null;
     private DcMotor Intake = null;
 
-    private Servo BucketServo = null;
+    private CRServo BucketServo = null;
     private Servo ClawServo = null;
+    private Servo BlockServo = null;
 
 
 
@@ -58,16 +59,23 @@ public class Robot12000 {
         HorizontalArm = OpMode.hardwareMap.get(CRServo.class, "horizontal_arm");
         IntakeArm = OpMode.hardwareMap.get(DcMotor.class, "intake_arm");
 
-
-
         LeftArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         RightArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         //Servos
         Intake = OpMode.hardwareMap.get(DcMotor.class, "intake");
-        BucketServo = OpMode.hardwareMap.get(Servo.class, "bucket_servo");
+        BucketServo = OpMode.hardwareMap.get(CRServo.class, "bucket_servo");
         ClawServo = OpMode.hardwareMap.get(Servo.class, "claw");
+        BlockServo = OpMode.hardwareMap.get(Servo.class, "block_servo");
         //IMU
         RobotIMU = OpMode.hardwareMap.get(IMU.class, "imu");
+        //Color Sensor
+
+
+
+        LeftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        RightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        RightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        LeftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         //Uncomment when implemented
         //IntakeColor = OpMode.hardwareMap.get(ColorSensor.class, "intake_color");
@@ -135,7 +143,9 @@ public class Robot12000 {
         HorizontalArm.setPower(power);
     }
 
-    void Bucket(double pos) { BucketServo.setPosition(pos); }
+    void Bucket(double pos) { BucketServo.setPower(pos); }
+
+
 
     void IntakeArmP(double power) { IntakeArm.setPower(power); }
 
