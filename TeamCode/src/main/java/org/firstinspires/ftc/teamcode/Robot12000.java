@@ -31,6 +31,7 @@ public class Robot12000 {
 
 
 
+
     //Uncomment when implemented
     //private ColorSensor IntakeColor = null;
 
@@ -87,6 +88,9 @@ public class Robot12000 {
         RightBack.setDirection(DcMotor.Direction.REVERSE);
 
         LeftArm.setDirection(DcMotor.Direction.REVERSE);
+
+        IntakeArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        IntakeArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
     }
 
@@ -153,4 +157,37 @@ public class Robot12000 {
     {
         ClawServo.setPosition(pos);
     }
+
+    void BlockServo(double pos)
+    {
+        BlockServo.setPosition(pos);
+    }
+
+    void ReturnArm()
+    {
+        IntakeArm.setTargetPosition(25);
+        IntakeArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        IntakeArm.setPower(0.8);
+
+    }
+
+    public Boolean ArmReturning()
+    {
+
+
+        //if(IntakeArm.getCurrentPosition() >= IntakeArm.getTargetPosition() -100 && IntakeArm.getCurrentPosition() <= IntakeArm.getTargetPosition() + 100 && IntakeArm.getMode() == DcMotor.RunMode.RUN_TO_POSITION)
+        if(!IntakeArm.isBusy())
+        {
+            IntakeArm.setPower(0);
+            IntakeArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
+        if(IntakeArm.getMode() == DcMotor.RunMode.RUN_TO_POSITION)
+        {
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+
 }

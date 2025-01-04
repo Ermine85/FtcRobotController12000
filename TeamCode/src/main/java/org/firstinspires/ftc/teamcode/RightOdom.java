@@ -29,19 +29,18 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import android.app.usage.NetworkStats;
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.robot.Robot;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.vision.VisionPortal;
 
 import java.util.Vector;
 
@@ -52,9 +51,9 @@ import java.util.Vector;
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list.
  */
-@Autonomous(name = "Odom", group = "Concept")
+@Autonomous(name = "Park in Obs", group = "Auto")
 // @Disabled
-public class Odom2 extends LinearOpMode {
+public class RightOdom extends LinearOpMode {
 
     private static final boolean USE_WEBCAM = true;  // true for webcam, false for phone camera
 
@@ -73,10 +72,13 @@ public class Odom2 extends LinearOpMode {
     private DcMotor LeftBackABE = null;
     private DcMotor RightFront = null;
     private DcMotor RightBackARE = null;
-    private DcMotor RightEncoder = null;
-    private DcMotor LeftEncoder = null;
-    private CRServo PixelServo = null;
-    private ColorSensor colorSensor = null;
+
+    private DcMotor RightArm = null;
+    private DcMotor LeftArm = null;
+
+
+
+    private Servo specG = null;
 
     private Vector<Double> InitialPosition = new Vector<Double>(3);
     private Vector<Double> CurrentPosition = new Vector<Double>(3);
@@ -99,6 +101,7 @@ public class Odom2 extends LinearOpMode {
     private double DeltaX;
     private double DeltaY;
     private double DeltaA;
+    private Servo ClawS;
 
     private double TrackLength = 12.5; //diameter between Left Encoder and Right
     private double BackRadius = 5; //distance between back wheel and the center of L & R
@@ -122,18 +125,26 @@ public class Odom2 extends LinearOpMode {
         RightFront = hardwareMap.get(DcMotor.class, "right_front");
         LeftBackABE = hardwareMap.get(DcMotor.class, "left_back");
         RightBackARE = hardwareMap.get(DcMotor.class, "right_back");
+        //Vert. Arms
+        LeftArm = hardwareMap.get(DcMotor.class, "arm_left");
+        RightArm = hardwareMap.get(DcMotor.class, "arm_right");
 
-
+        //Servos
+        ClawS = hardwareMap.get(Servo.class, "claw");
         RobotIMU = hardwareMap.get(IMU.class, "imu");
+
         //Start Encoders
         LeftFrontALE.setDirection(DcMotor.Direction.REVERSE);
         LeftBackABE.setDirection(DcMotor.Direction.FORWARD);
         RightFront.setDirection(DcMotor.Direction.REVERSE);
         RightBackARE.setDirection(DcMotor.Direction.FORWARD);
 
+        LeftArm.setDirection(DcMotor.Direction.REVERSE);
+
         LeftFrontALE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         LeftBackABE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         RightBackARE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        RightArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         LeftFrontALE.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         LeftBackABE.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -145,7 +156,7 @@ public class Odom2 extends LinearOpMode {
 
         StartVector(InitialPosition, 0, 0, 10);
         StartVector(CurrentPosition, 0, 0,10);  // ^
-        StartVector(Tolerance, 1, 0.5, 1000); //1000 nulls 3rd spot (tolerance only has 2 spots)
+        StartVector(Tolerance, 1, 2, 1000); //1000 nulls 3rd spot (tolerance only has 2 spots)
         StartVector(PreviousEncoder, 0, 0, 0); //Holds previous encoder counts
 
 
@@ -155,19 +166,52 @@ public class Odom2 extends LinearOpMode {
 
         if (opModeIsActive()) {
 
-            StartAngle = Yaw(true);
-            sleep(2000);
-            /*MoveTo(5,-21,0,0.6);
-            sleep(2000);
-            MoveTo(-40,0,0,0.6);*/
+            //ClawS.setPosition(0.25);
 
-            MoveTo(-20, -21,0,0.5);
+            StartAngle = Yaw(true);
+            //sleep(2000);
+            MoveTo(8,-18,0,0.6);
+            Arm(1,2950);
             sleep(2000);
+
+            MoveTo(8,-24,0,0.5);
+            sleep(1000);
+            Arm(-0.7, 2150);
+
+            MoveTo(-33,0,0,0.6);
+            sleep(1000);
+            Arm(-0.6,500);
+
+            LeftArm.setPower(0);
+            LeftArm.setPower(0);
+
+            sleep(2000);
+
+            /*
+            MoveTo(-25, -18,0,0.5);
+            sleep(1000);
+            Arm(1,2950);
+
+            sleep(1000);
+            MoveTo(-25,-21.75,0,0.5);
+            sleep(1000);
+            Arm(-0.7, 2150);
+
+            sleep(1000);
             MoveTo(5,-5,98,0.5);
+            Arm(-1,1000);
+
             sleep(2000);
-            MoveTo(5,-45,0,0.5);
+            MoveTo(5,-45,0,0.7);
+
+            Arm(1, 2200);
             sleep(2000);
-            MoveTo(-3,-46,0,0.5);
+            MoveTo(-5,-46,0,0.5);
+            sleep(2000);
+            LeftArm.setPower(0);
+            RightArm.setPower(0);
+            sleep(2000);
+            */
 
 
 
@@ -314,6 +358,13 @@ public class Odom2 extends LinearOpMode {
         //double DltX = BE;
         SetVector(PreviousEncoder, LeftFrontALE.getCurrentPosition(), RightBackARE.getCurrentPosition(), LeftBackABE.getCurrentPosition());
 
+        /*telemetry.addData("LE", LE);
+        telemetry.addData("RE", RE);
+        telemetry.addData("BE", BE);
+        telemetry.addLine();
+        telemetry.addData("DeltaY", DeltaY);
+        telemetry.addData("DeltaX", DeltaX);
+        telemetry.addData("DeltaA", DeltaA);*/
     }
 
     public double Yaw(boolean radians)
@@ -358,6 +409,30 @@ public class Odom2 extends LinearOpMode {
         RightFront.setPower(M2 * Speed);
         LeftBackABE.setPower(M3 * Speed);
         RightBackARE.setPower(M4 * Speed);
+
+    }
+
+    public void Arm(double power, int location) //Running using encoder counts (should hold position)
+    {
+
+
+        //LeftArm.setTargetPosition(location); //Location
+        RightArm.setTargetPosition(location);
+
+        //LeftArm.setMode(DcMotor.RunMode.RUN_TO_POSITION); //Mode
+        RightArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        LeftArm.setPower(power); //Power
+        RightArm.setPower(power);
+
+        while(RightArm.isBusy()) //Pauses until they reach location
+        {
+            //nothing
+        }
+
+        LeftArm.setPower(0.1);
+        RightArm.setPower(0.1);
+        //RightArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
     }
 

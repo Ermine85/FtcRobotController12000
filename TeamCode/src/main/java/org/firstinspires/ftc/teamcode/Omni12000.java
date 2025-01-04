@@ -84,11 +84,23 @@ public class Omni12000 extends LinearOpMode {
     private double FieldAngle = 0;
     private boolean MoveToTarget = true;
     private double CurrentRobotAngle = 0;
+    private Boolean HasCube = false;
 
     private boolean ClawOpen = false;
 
     private String IntakeMode = "INTAKE";
 
+    private String CurrentCube = "";
+    private String WantedCube = "RED";
+    private String AfterCube = "NONE";
+
+    private Boolean IncludeYellow = false;
+    private double REJECTTIMER = 0;
+    private double CUBEDELAY = 0;
+
+
+
+    private Boolean ReturningArm = false;
     //    private String ArmPosition = "NORMAL"; //DOWN, PLANE, NORMAL
     private IMU Imu = null;
 
@@ -128,42 +140,14 @@ public class Omni12000 extends LinearOpMode {
 
 
 
+
         // Define the task to add red color sensor data to the list
 
         // run until the end of the match (driver presses STOP)
        while (opModeIsActive()) {
-           telemetry.addData("Current color: ", ColorSensor.argb());
-           telemetry.addData("Color red: ", ColorSensor.red());
-           telemetry.addData("Color blue: ", ColorSensor.blue());
-           telemetry.addData("Color green: ", ColorSensor.green());
-
-           double[] empty = {74, 120, 120};
-           double[] red = {896, 170, 407};
-           double[] blue = {179, 867, 365};
-           double[] yellow = {1386, 363, 1724};
-
-           double deltaE = Math.sqrt((Math.pow(empty[0] - ColorSensor.red(),2) + (Math.pow(empty[1] - ColorSensor.blue(),2)) + (Math.pow(empty[2] - ColorSensor.green(),2)) ));
-           double deltaR = Math.sqrt((Math.pow(red[0] - ColorSensor.red(),2) + (Math.pow(red[1] - ColorSensor.blue(),2)) + (Math.pow(red[2] - ColorSensor.green(),2)) ));
-           double deltaB = Math.sqrt((Math.pow(blue[0] - ColorSensor.red(),2) + (Math.pow(blue[1] - ColorSensor.blue(),2)) + (Math.pow(blue[2] - ColorSensor.green(),2)) ));
-           double deltaY = Math.sqrt((Math.pow(yellow[0] - ColorSensor.red(),2) + (Math.pow(yellow[1] - ColorSensor.blue(),2)) + (Math.pow(yellow[2] - ColorSensor.green(),2)) ));
-
-           double emptyConfidence = 1 - (deltaE/3)*((1 / (deltaE + deltaR)) + (1/((deltaE + deltaB))) + (1/(deltaE + deltaY)));
-           double redConfidence = 1 - (deltaR/3)*((1 / (deltaR + deltaE)) + (1/((deltaR + deltaB))) + (1/(deltaR + deltaY)));
-           double blueConfidence = 1 - (deltaB/3)*((1 / (deltaB + deltaE)) + (1/((deltaB + deltaE))) + (1/(deltaB + deltaY)));
-           double yellowConfidence = 1 - (deltaY/3)*((1 / (deltaY + deltaE)) + (1/((deltaY + deltaE))) + (1/(deltaY + deltaE)));
-            double[] confidenceValues = {emptyConfidence,redConfidence,blueConfidence,yellowConfidence};
-           double largestConfidence = findLargest(confidenceValues);
-
-           if(emptyConfidence == largestConfidence){
-               telemetry.addData("The box is empty ", "");
-           } else if (redConfidence == largestConfidence) {
-               telemetry.addData("The cube is red ", "");
-           } else if (blueConfidence == largestConfidence) {
-               telemetry.addData("The cube is blue ", "");
-           } else if (yellowConfidence == largestConfidence) {
-               telemetry.addData("The cube is Yellow ", "");
-           }
-
+           telemetry.addData("Wanting Cube", WantedCube);
+           telemetry.addData("After Cube", AfterCube);
+           telemetry.addData("Cube is", CurrentCube);
 
            double max; //Used to compare wheel power
            CurrentRobotAngle = RobotStartAngle - Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
@@ -212,10 +196,10 @@ public class Omni12000 extends LinearOpMode {
                 BackUpDrive = true;
             }
 
-            telemetry.addData("Arm location", ArmTarget);
+            /*telemetry.addData("Arm location", ArmTarget);
 
            telemetry.addData("IMU Angle", Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
-           telemetry.addData("Angle", 360*FieldAngle/(2 * Math.PI));
+           telemetry.addData("Angle", 360*FieldAngle/(2 * Math.PI));*/
 
            double RobotAngle = FieldAngle - CurrentRobotAngle + Math.PI;
            double leftFrontPower = (((Math.sin(RobotAngle) + Math.cos(RobotAngle)) * Speed) - yaw); //LF
@@ -253,13 +237,18 @@ public class Omni12000 extends LinearOpMode {
                toggleReady = false;
            }
 
+           if(touch.isPressed() && ReturningArm)
+           {
+               Functions.HorzArm(0);
+               ReturningArm = false;
+           }
 
-           if(!gamepad1.a  && !gamepad1.x)
+           if(!gamepad1.a  && !gamepad1.x && gamepad1.left_trigger == 0 && gamepad1.right_trigger == 0 && !gamepad1.back)
            {
                toggleReady = true;
            }
 
-           if(gamepad1.right_trigger > 0.1)
+           /*if(gamepad1.right_trigger > 0.1)
            {
                if(IntakeMode == "INTAKE"){
                    Functions.SetIntake(-gamepad1.right_trigger/3);
@@ -272,8 +261,77 @@ public class Omni12000 extends LinearOpMode {
                }else Functions.SetIntake(gamepad1.left_trigger/2);
            }else {
                Functions.SetIntake(0);
+           }*/
+
+           if(gamepad1.right_trigger > 0.1 && toggleReady)
+           {
+               toggleReady = false;
+               if(AfterCube == "NONE" || AfterCube == "YELLOW")
+               {
+                   AfterCube = WantedCube;
+
+               }else {
+                   AfterCube = "NONE";
+                   Functions.SetIntake(0);
+               }
+
+
+           }
+           if(gamepad1.left_trigger > 0.1 && toggleReady)
+           {
+               toggleReady = false;
+               if(AfterCube != "YELLOW")
+               {
+                   AfterCube = "YELLOW";
+               }else {
+                   AfterCube = "NONE";
+                   Functions.SetIntake(0);
+               }
            }
 
+           if(AfterCube != "NONE" && AfterCube != CurrentCube)
+           {
+               Functions.SetIntake(-0.5);
+
+               CheckColor(false);
+               if(CurrentCube != "EMPTY")
+               {
+                   Reject();
+               }
+           }
+           if(AfterCube == CurrentCube)
+           {
+               Functions.SetIntake(0);
+               AfterCube = "NONE";
+               ReturnToBucket();
+           }
+
+           if(getRuntime() >= CUBEDELAY + 0.2 && CUBEDELAY != 0)
+           {
+               CUBEDELAY = 0;
+               if(AfterCube == CurrentCube)
+               {
+
+               }
+           }
+           if(gamepad1.back && toggleReady)
+           {
+               toggleReady = false;
+               if(WantedCube == "BLUE")
+               {
+                   WantedCube = "RED";
+               }else if (WantedCube == "RED") {
+                   WantedCube = "YELLOW";
+               }else{
+                   WantedCube = "BLUE";
+               }
+           }
+
+           if(getRuntime() >= REJECTTIMER + 1 && REJECTTIMER != 0)
+           {
+               REJECTTIMER = 0;
+               Functions.BlockServo(0.725);
+           }
            if(gamepad1.x && toggleReady)
            {
                if(ClawOpen)
@@ -290,7 +348,8 @@ public class Omni12000 extends LinearOpMode {
            telemetry.addData("Claw Open", ClawOpen);
 
            telemetry.addData("Intake Mode", IntakeMode);
-
+           telemetry.addData("Horz-Returning", ReturningArm);
+           telemetry.addData("IntakeArm-Returning", Functions.ArmReturning());
 
            if(gamepad1.right_bumper) //Into Robot
            {
@@ -300,7 +359,7 @@ public class Omni12000 extends LinearOpMode {
 
                if(gamepad1.y){ //Horz Arm
                    Functions.HorzArm(1);
-               }else{ Functions.HorzArm(0); }
+               }else if(!ReturningArm){ Functions.HorzArm(0); }
 
            }else if(gamepad1.left_bumper) //Out of Robot
            {
@@ -310,10 +369,13 @@ public class Omni12000 extends LinearOpMode {
 
                if(gamepad1.y){ //Horz Arm
                    Functions.HorzArm(-1);
-               }else{ Functions.HorzArm(0); }
+               }else if (!ReturningArm){ Functions.HorzArm(0); }
            }else {
-               Functions.HorzArm(0);
-               Functions.IntakeArmP(0);
+               if(!ReturningArm && !Functions.ArmReturning()){
+                   Functions.HorzArm(0);
+                   Functions.IntakeArmP(0);
+               }
+
            }
 
 
@@ -322,12 +384,21 @@ public class Omni12000 extends LinearOpMode {
                RobotStartAngle = Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
            }
 
-           if(gamepad1.dpad_left || gamepad2.dpad_right)
+           /*if(gamepad1.dpad_left || gamepad2.dpad_right)
            {
                Functions.Bucket(-0.2);
                //Functions.ClawServo(0.6);
            }else{
                Functions.Bucket(0);
+           }*/
+
+           if(gamepad1.dpad_left)
+           {
+               Functions.BlockServo(0.725);
+           }
+           if(gamepad1.dpad_right)
+           {
+               Functions.BlockServo(0.60);
            }
 
 
@@ -341,11 +412,6 @@ public class Omni12000 extends LinearOpMode {
            }
 
 
-
-
-
-
-
            // Show the elapsed game time and wheel power.
             //telemetry.addData("ArmSpeed", armSpeed);
             telemetry.addData("Back Up", BackUpDrive);
@@ -353,5 +419,52 @@ public class Omni12000 extends LinearOpMode {
             //telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
             telemetry.update();
        }
+
+
+    }
+    void CheckColor(boolean loop)
+    {
+        double[] empty = {74, 120, 120};
+        double[] red = {896, 170, 407};
+        double[] blue = {179, 867, 365};
+        double[] yellow = {1386, 363, 1724};
+
+        double deltaE = Math.sqrt((Math.pow(empty[0] - ColorSensor.red(),2) + (Math.pow(empty[1] - ColorSensor.blue(),2)) + (Math.pow(empty[2] - ColorSensor.green(),2)) ));
+        double deltaR = Math.sqrt((Math.pow(red[0] - ColorSensor.red(),2) + (Math.pow(red[1] - ColorSensor.blue(),2)) + (Math.pow(red[2] - ColorSensor.green(),2)) ));
+        double deltaB = Math.sqrt((Math.pow(blue[0] - ColorSensor.red(),2) + (Math.pow(blue[1] - ColorSensor.blue(),2)) + (Math.pow(blue[2] - ColorSensor.green(),2)) ));
+        double deltaY = Math.sqrt((Math.pow(yellow[0] - ColorSensor.red(),2) + (Math.pow(yellow[1] - ColorSensor.blue(),2)) + (Math.pow(yellow[2] - ColorSensor.green(),2)) ));
+
+        double emptyConfidence = 1 - (deltaE/3)*((1 / (deltaE + deltaR)) + (1/((deltaE + deltaB))) + (1/(deltaE + deltaY)));
+        double redConfidence = 1 - (deltaR/3)*((1 / (deltaR + deltaE)) + (1/((deltaR + deltaB))) + (1/(deltaR + deltaY)));
+        double blueConfidence = 1 - (deltaB/3)*((1 / (deltaB + deltaE)) + (1/((deltaB + deltaE))) + (1/(deltaB + deltaY)));
+        double yellowConfidence = 1 - (deltaY/3)*((1 / (deltaY + deltaE)) + (1/((deltaY + deltaE))) + (1/(deltaY + deltaE)));
+        double[] confidenceValues = {emptyConfidence,redConfidence,blueConfidence,yellowConfidence};
+        double largestConfidence = findLargest(confidenceValues);
+
+        if(emptyConfidence == largestConfidence){
+            CurrentCube = "EMPTY";
+        } else if (redConfidence == largestConfidence) {
+            CurrentCube = "RED";
+        } else if (blueConfidence == largestConfidence) {
+            CurrentCube = "BLUE";
+        } else if (yellowConfidence == largestConfidence) {
+            CurrentCube = "YELLOW";
+        }
+
+    }
+
+    void ReturnToBucket()
+    {
+        ReturningArm = true;
+        Functions.HorzArm(-1);
+        Functions.ReturnArm();
+
+    }
+
+    void Reject()
+    {
+        REJECTTIMER = getRuntime();
+        Functions.SetIntake(0.45);
+        Functions.BlockServo(0.60);
     }
 }
