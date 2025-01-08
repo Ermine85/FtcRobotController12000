@@ -29,28 +29,20 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import android.graphics.Color;
-
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.sun.tools.javac.comp.Check;
 
 //import org.checkerframework.checker.units.qual.Angle;
-import org.firstinspires.ftc.robotcore.external.Func;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
-import java.security.PrivateKey;
-import java.sql.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 //import org.firstinspires.ftc.robotcontroller.external.samples.RobotHardware;
 
@@ -94,9 +86,9 @@ public class Omni12000 extends LinearOpMode {
     private String WantedCube = "RED";
     private String AfterCube = "NONE";
 
-    private Boolean IncludeYellow = false;
-    private double REJECTTIMER = 0;
-    private double CUBEDELAY = 0;
+    private Boolean DelayBool = false;
+    //Timers
+    private double REJECTTIMER = 0, TRANSFERTIMER = -5, CUBEDELAY = 0;
 
 
 
@@ -149,6 +141,7 @@ public class Omni12000 extends LinearOpMode {
            telemetry.addData("After Cube", AfterCube);
            telemetry.addData("Cube is", CurrentCube);
 
+           CheckColor(false);
            double max; //Used to compare wheel power
            CurrentRobotAngle = RobotStartAngle - Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
            // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
@@ -268,7 +261,7 @@ public class Omni12000 extends LinearOpMode {
                toggleReady = false;
                if(AfterCube == "NONE" || AfterCube == "YELLOW")
                {
-                   AfterCube = WantedCube;
+                   SetAfter(WantedCube);
 
                }else {
                    AfterCube = "NONE";
@@ -282,46 +275,21 @@ public class Omni12000 extends LinearOpMode {
                toggleReady = false;
                if(AfterCube != "YELLOW")
                {
-                   AfterCube = "YELLOW";
+                   SetAfter("YELLOW");
                }else {
                    AfterCube = "NONE";
                    Functions.SetIntake(0);
                }
            }
 
-           if(AfterCube != "NONE" && AfterCube != CurrentCube)
-           {
-               Functions.SetIntake(-0.5);
 
-               CheckColor(false);
-               if(CurrentCube != "EMPTY")
-               {
-                   Reject();
-               }
-           }
-           if(AfterCube == CurrentCube)
-           {
-               Functions.SetIntake(0);
-               AfterCube = "NONE";
-               ReturnToBucket();
-           }
 
-           if(getRuntime() >= CUBEDELAY + 0.2 && CUBEDELAY != 0)
-           {
-               CUBEDELAY = 0;
-               if(AfterCube == CurrentCube)
-               {
-
-               }
-           }
            if(gamepad1.back && toggleReady)
            {
                toggleReady = false;
                if(WantedCube == "BLUE")
                {
                    WantedCube = "RED";
-               }else if (WantedCube == "RED") {
-                   WantedCube = "YELLOW";
                }else{
                    WantedCube = "BLUE";
                }
@@ -332,6 +300,7 @@ public class Omni12000 extends LinearOpMode {
                REJECTTIMER = 0;
                Functions.BlockServo(0.725);
            }
+
            if(gamepad1.x && toggleReady)
            {
                if(ClawOpen)
@@ -384,21 +353,12 @@ public class Omni12000 extends LinearOpMode {
                RobotStartAngle = Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
            }
 
-           /*if(gamepad1.dpad_left || gamepad2.dpad_right)
+           if(gamepad1.dpad_left || gamepad2.dpad_right)
            {
                Functions.Bucket(-0.2);
                //Functions.ClawServo(0.6);
            }else{
                Functions.Bucket(0);
-           }*/
-
-           if(gamepad1.dpad_left)
-           {
-               Functions.BlockServo(0.725);
-           }
-           if(gamepad1.dpad_right)
-           {
-               Functions.BlockServo(0.60);
            }
 
 
@@ -411,6 +371,17 @@ public class Omni12000 extends LinearOpMode {
                Functions.VertArm(0);
            }
 
+           if(HasCube && !ReturningArm && !Functions.ArmReturning())
+           {
+               Transfer(-0.45);
+               HasCube = false;
+           }
+
+           if(getRuntime() >= CUBEDELAY + 0.5  && CUBEDELAY != 0)
+           {
+               CUBEDELAY = 0;
+               Functions.BlockServo(0.5);
+           }
 
            // Show the elapsed game time and wheel power.
             //telemetry.addData("ArmSpeed", armSpeed);
@@ -451,20 +422,51 @@ public class Omni12000 extends LinearOpMode {
             CurrentCube = "YELLOW";
         }
 
+        if(AfterCube == CurrentCube)
+        {
+            Functions.SetIntake(0);
+            AfterCube = "NONE";
+            ReturnToBucket();
+        }else if(CurrentCube != "EMPTY")
+        {
+            IntakeCube();
+        }
     }
 
     void ReturnToBucket()
     {
         ReturningArm = true;
+        HasCube = true;
         Functions.HorzArm(-1);
         Functions.ReturnArm();
-
     }
 
     void Reject()
     {
         REJECTTIMER = getRuntime();
-        Functions.SetIntake(0.45);
-        Functions.BlockServo(0.60);
+        Functions.SetIntake(-0.45);
+        Functions.BlockServo(0.45);
+    }
+    void Transfer(double speed)
+    {
+        Functions.SetIntake(speed);
+        CUBEDELAY = getRuntime();
+        DelayBool = true;
+    }
+
+    void SetAfter(String Color)
+    {
+        Functions.BlockServo(0.725);
+        Functions.SetIntake(-0.5);
+        AfterCube = Color;
+    }
+
+    void IntakeCube()
+    {
+        if(AfterCube != "NONE")
+        {
+            Reject();
+
+        }
     }
 }

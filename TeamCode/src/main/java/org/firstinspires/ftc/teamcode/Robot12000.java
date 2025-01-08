@@ -173,8 +173,6 @@ public class Robot12000 {
 
     public Boolean ArmReturning()
     {
-
-
         //if(IntakeArm.getCurrentPosition() >= IntakeArm.getTargetPosition() -100 && IntakeArm.getCurrentPosition() <= IntakeArm.getTargetPosition() + 100 && IntakeArm.getMode() == DcMotor.RunMode.RUN_TO_POSITION)
         if(!IntakeArm.isBusy())
         {
