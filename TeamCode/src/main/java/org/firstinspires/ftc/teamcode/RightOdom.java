@@ -101,6 +101,7 @@ public class RightOdom extends LinearOpMode {
     private double DeltaX;
     private double DeltaY;
     private double DeltaA;
+    private Boolean Hold;
     private Servo ClawS;
 
     private double TrackLength = 12.5; //diameter between Left Encoder and Right
@@ -166,19 +167,19 @@ public class RightOdom extends LinearOpMode {
 
         if (opModeIsActive()) {
 
-            //ClawS.setPosition(0.25);
+            ClawS.setPosition(0.55);
 
             StartAngle = Yaw(true);
             //sleep(2000);
-            MoveTo(8,-18,0,0.6);
+            MoveTo(8,-18,0,0.6,3);
             Arm(1,2950);
             sleep(2000);
 
-            MoveTo(8,-24,0,0.5);
+            MoveTo(8,-24,0,0.5, 3);
             sleep(1000);
             Arm(-0.7, 2150);
 
-            MoveTo(-33,0,0,0.6);
+            MoveTo(-30,-2,0,0.6, 5);
             sleep(1000);
             Arm(-0.6,500);
 
@@ -222,12 +223,13 @@ public class RightOdom extends LinearOpMode {
     }   // end runOpMode()
 
 
-    public void MoveTo(double TargetX, double TargetY, double TargetAngle, double Speed)
+    public void MoveTo(double TargetX, double TargetY, double TargetAngle, double Speed, double timer)
     {
         //TargetAngle = (TargetAngle * (2 * Math.PI) / 360); //Convert target angle to radians
         //double AngleTolerance = Tolerance.get(1) * (2* Math.PI/ 360); //converts tolerance angle from tolerance vector
         //Start with Odoms at 0
-
+        double StartTime = getRuntime();
+        double EndTime = getRuntime() + timer;
         double AngleOff = TargetAngle;//Position Variables
         double Crx = 0; //current robot x
         double Cry = 0; //current robot y
@@ -241,7 +243,7 @@ public class RightOdom extends LinearOpMode {
         double RadiusToTarget = Math.sqrt(Math.pow(CurrentPosition.get(0) - TargetX, 2 ) + Math.pow(CurrentPosition.get(1) - TargetY, 2));
         double StartingR = RadiusToTarget;
         double StartingSpeed = Speed;
-        while(RadiusToTarget > Tolerance.get(0) || Math.abs(AngleOff) > Tolerance.get(1)) //Total Distance greater than tolerance position
+        while(RadiusToTarget > Tolerance.get(0) || Math.abs(AngleOff) > Tolerance.get(1))  //Total Distance greater than tolerance position
         {
             RobotYaw = StartAngle - Yaw(true);
             //Gets Odometer values (Sets DeltaX and DeltaY)
@@ -306,6 +308,16 @@ public class RightOdom extends LinearOpMode {
             telemetry.addData("RobotYawVar", RobotYaw * 180/Math.PI);
             telemetry.addData("Yaw", Yaw(false));
             telemetry.update();
+
+            if(getRuntime() >= EndTime)
+            {
+                LeftFrontALE.setPower(0);
+                LeftBackABE.setPower(0);
+                RightBackARE.setPower(0);
+                RightFront.setPower(0);
+                SetVector(InitialPosition, TargetX, TargetY, TargetAngle);
+                return;
+            }
 
 
         }

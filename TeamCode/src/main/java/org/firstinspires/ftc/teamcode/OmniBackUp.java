@@ -29,28 +29,26 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.hardware.ColorSensor;
-import com.sun.tools.javac.comp.Check;
 
-//import org.checkerframework.checker.units.qual.Angle;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
+import java.security.Policy;
 import java.util.ArrayList;
 import java.util.List;
 
 //import org.firstinspires.ftc.robotcontroller.external.samples.RobotHardware;
 
 
-@TeleOp(name="Omni", group="Linear Opmode")
+@TeleOp(name="Omni2", group="Linear Opmode")
 //@Disabled
-public class Omni12000 extends LinearOpMode {
+public class OmniBackUp extends LinearOpMode {
 
     private DcMotor LeftFront = null;
     private DcMotor LeftBack = null;
@@ -58,10 +56,11 @@ public class Omni12000 extends LinearOpMode {
     private DcMotor RightBack = null;
 
     private ColorSensor ColorSensor = null;
-    private TouchSensor touch = null, verttouch = null;
+    private TouchSensor touch = null;
 
     private Robot12000 Functions = null;
-    private boolean BackUpDrive = false;
+    private boolean FlippedDrive = false;
+    private boolean BackUpDrive = true;
 
     //private boolean ArmMode = false;
     private double armSpeed = 1;
@@ -69,11 +68,11 @@ public class Omni12000 extends LinearOpMode {
     private double ServoPos = 0;
 
     private int ArmTarget = 0;
-    private boolean toggleReadyB = true, toggleReadyT = true; //Trigger and Buttons
-
+    private boolean toggleReady = true;
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
     private double RobotStartAngle = 0;
+    private double FieldAngle = 0;
     private boolean MoveToTarget = true;
     private double CurrentRobotAngle = 0;
     private Boolean HasCube = false;
@@ -91,11 +90,9 @@ public class Omni12000 extends LinearOpMode {
     //Timers
     private double REJECTTIMER = 0, TRANSFERTIMER = -5, CUBEDELAY = 0;
 
-    private double FieldAngle = 0;
 
 
-
-    private Boolean ReturningArm = false, ReturningVert = false;
+    private Boolean ReturningArm = false;
     //    private String ArmPosition = "NORMAL"; //DOWN, PLANE, NORMAL
     private IMU Imu = null;
 
@@ -115,20 +112,10 @@ public class Omni12000 extends LinearOpMode {
     }
     @Override
     public void runOpMode() {
-
         telemetry.addData("Status", "Initialized");
-        Imu = hardwareMap.get(IMU.class, "imu");
+        Imu = hardwareMap.get(IMU.class, "E_imu");
         telemetry.update();
         Functions = new Robot12000(this);
-        Imu.initialize(
-                new IMU.Parameters(
-                        new RevHubOrientationOnRobot(
-                                RevHubOrientationOnRobot.LogoFacingDirection.UP, //Control is UP Expansion Down
-                                RevHubOrientationOnRobot.UsbFacingDirection.RIGHT
-                        )
-                )
-
-        );
         Functions.init();
         Imu.resetYaw();
 
@@ -138,7 +125,6 @@ public class Omni12000 extends LinearOpMode {
 
         ColorSensor = hardwareMap.get(ColorSensor.class, "ColorSensor");
         touch = hardwareMap.get(TouchSensor.class, "SlideTouch");
-        verttouch = hardwareMap.get(TouchSensor.class, "vert_touch");
 
         List<Integer> list = new ArrayList<>();
         List<Integer> GreenList = new ArrayList<>();
@@ -152,29 +138,21 @@ public class Omni12000 extends LinearOpMode {
            telemetry.addData("After Cube", AfterCube);
            telemetry.addData("Cube is", CurrentCube);
 
-           CheckColor(false);
 
            double max; //Used to compare wheel power
            CurrentRobotAngle = Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
-
-           CurrentRobotAngle *= -1;
-
-           /*if(CurrentRobotAngle < 0)
-           {
-               CurrentRobotAngle += Math.PI * 2;
-           }*/
            // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
 
            double axial   =  -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value --
            double lateral =  gamepad1.left_stick_x;
 
-           /*(ReversDrive)
+           if(ReversDrive)
            {
                axial *= -1;
                lateral *= -1;
-           }*/
-           double yaw = -gamepad1.right_stick_x/2;
-            /*
+           }
+           double yaw     =  -gamepad1.right_stick_x/2;
+
            double BleftFrontPower  = axial + lateral - yaw ;
            double BrightFrontPower = -axial + lateral - yaw;
            double BleftBackPower   = axial - lateral - yaw ;
@@ -192,33 +170,23 @@ public class Omni12000 extends LinearOpMode {
                BrightFrontPower /= backUpMax;
                BleftBackPower /= backUpMax;
                BrightBackPower /= backUpMax;
-           }*/
+           }
 
-
+           double FieldAngle = 0;
            telemetry.addData("yaw", yaw);
            double Speed = Math.sqrt(Math.pow(axial, 2) + Math.pow(lateral, 2));
 
            //FieldAngle = Math.atan(lateral/axial);
            if (axial == 0)  axial = 0.001;
-
            FieldAngle = Math.atan(lateral / axial);
-
            if (axial < 0) {
                FieldAngle = FieldAngle + Math.PI;
-           }
-           if(axial < 0 && lateral < 0)
-           {
-               FieldAngle -= Math.PI * 2;
-           }
-           if(FieldAngle < 0)
-           {
-               FieldAngle += Math.PI * 2;
            }
            if (axial > 0){
                //Do nothing
            }
 
-           //FieldAngle = FieldAngle + Math.PI;
+           FieldAngle = FieldAngle + Math.PI;
 
            if(gamepad1.x && gamepad1.start)
            {
@@ -227,24 +195,16 @@ public class Omni12000 extends LinearOpMode {
 
             telemetry.addLine();
 
-           telemetry.addData("lateral", lateral);
-           telemetry.addData("axial", axial);
-           telemetry.addLine();
            telemetry.addData("IMU Angle", CurrentRobotAngle*180/Math.PI);
            telemetry.addData("Angle", 360*FieldAngle/(2 * Math.PI));
            telemetry.addLine();
 
 
-           double RobotAngle = FieldAngle - CurrentRobotAngle;
-
-
-
+           double RobotAngle = FieldAngle - CurrentRobotAngle + Math.PI;
            double leftFrontPower = (((Math.sin(RobotAngle) + Math.cos(RobotAngle)) * Speed) - yaw); //LF
            double rightFrontPower = (((Math.sin(RobotAngle) - Math.cos(RobotAngle)) * Speed) - yaw); //RF
            double leftBackPower = (((-Math.sin(RobotAngle) + Math.cos(RobotAngle)) * Speed) - yaw); //LB
            double rightBackPower = (((-Math.sin(RobotAngle) - Math.cos(RobotAngle)) * Speed) - yaw); //RB
-
-
            // Normalize the values so no wheel power exceeds 100%
            // This ensures that the robot maintains the desired motion.
            max = Math.max(Math.abs(leftFrontPower), Math.abs(rightFrontPower));
@@ -259,15 +219,23 @@ public class Omni12000 extends LinearOpMode {
            }
 
 
+           if(gamepad2.a)
+           {
+               Functions.BlockServo(0.45);
+           }
+           if(gamepad2.b)
+           {
+               Functions.BlockServo(0.725);
+           }
 
            if(!BackUpDrive)
            {
                Functions.Move(leftFrontPower, rightFrontPower, leftBackPower, rightBackPower);
            } else if(BackUpDrive) {
-               //Functions.Move(BleftFrontPower, BrightFrontPower, BleftBackPower, BrightBackPower);
+               Functions.Move(BleftFrontPower, BrightFrontPower, BleftBackPower, BrightBackPower);
            }
 
-           if(gamepad1.a && toggleReadyB)
+           if(gamepad1.a && toggleReady)
            {
                if(ReversDrive)
                {
@@ -277,6 +245,19 @@ public class Omni12000 extends LinearOpMode {
                }
            }
 
+           if(gamepad1.b && toggleReady)
+           {
+               if(Hold)
+               {
+                   Hold = false;
+               }else {
+                   Hold = true;
+               }
+           }
+
+           telemetry.addData("Toggle Ready", toggleReady);
+
+           telemetry.addData("Reversed", ReversDrive);
            //Flip Drive-Direction
 
 
@@ -286,16 +267,12 @@ public class Omni12000 extends LinearOpMode {
                ReturningArm = false;
            }
 
-           if(!gamepad1.a  && !gamepad1.x && !gamepad1.back && !gamepad1.b)
+           if(!gamepad1.a  && !gamepad1.x && gamepad1.left_trigger == 0 && gamepad1.right_trigger == 0 && !gamepad1.back && !gamepad1.b)
            {
-               toggleReadyB = true;
-           }
-           if(gamepad1.right_trigger <= 0.05 && gamepad1.left_trigger <= 0.05)
-           {
-               toggleReadyT = true;
+               toggleReady = true;
            }
 
-           /*if(gamepad1.right_trigger > 0.1)
+           if(gamepad1.right_trigger > 0.1)
            {
                if(IntakeMode == "INTAKE"){
                    Functions.SetIntake(-gamepad1.right_trigger/3);
@@ -308,30 +285,25 @@ public class Omni12000 extends LinearOpMode {
                }else Functions.SetIntake(gamepad1.left_trigger/2);
            }else {
                Functions.SetIntake(0);
-           }*/
+           }
 
-           if(gamepad1.right_trigger > 0.1 && toggleReadyT)
+           /*if(gamepad1.right_trigger > 0.1 && toggleReady)
            {
-               toggleReadyT = false;
+               toggleReady = false;
                if(AfterCube == "NONE" || AfterCube == "YELLOW")
                {
                    SetAfter(WantedCube);
 
-               }else if(!Hold) {
-                   Hold = true;
-               }else{
+               }else {
                    AfterCube = "NONE";
                    Functions.SetIntake(0);
-                   Hold = false;
                }
 
 
-
-
            }
-           if(gamepad1.left_trigger > 0.1 && toggleReadyT)
+           if(gamepad1.left_trigger > 0.1 && toggleReady)
            {
-               toggleReadyT = false;
+               toggleReady = false;
                if(AfterCube != "YELLOW")
                {
                    SetAfter("YELLOW");
@@ -339,13 +311,13 @@ public class Omni12000 extends LinearOpMode {
                    AfterCube = "NONE";
                    Functions.SetIntake(0);
                }
-           }
+           }*/
 
 
 
-           if(gamepad1.back && toggleReadyB)
+           if(gamepad1.back && toggleReady)
            {
-               toggleReadyB = false;
+               toggleReady = false;
                if(WantedCube == "BLUE")
                {
                    WantedCube = "RED";
@@ -360,7 +332,7 @@ public class Omni12000 extends LinearOpMode {
                Functions.BlockServo(0.725);
            }
 
-           if(gamepad1.x && toggleReadyB)
+           if(gamepad1.x && toggleReady)
            {
                if(ClawOpen)
                {
@@ -370,7 +342,7 @@ public class Omni12000 extends LinearOpMode {
                    Functions.ClawServo(0.55);
                    ClawOpen = true;
                }
-               toggleReadyB = false;
+               toggleReady = false;
            }
 
            telemetry.addData("Claw Open", ClawOpen);
@@ -431,20 +403,9 @@ public class Omni12000 extends LinearOpMode {
                Functions.VertArm(1);
            }else if(gamepad1.dpad_down)
            {
-               ReturningVert = true;
                Functions.VertArm(-1);
-           }else if(!ReturningVert){
+           }else {
                Functions.VertArm(0);
-           }
-
-           if(ReturningVert)
-           {
-               Functions.VertArm(-1);
-           }
-           if(verttouch.isPressed())
-           {
-               Functions.VertArm(0);
-               ReturningVert = false;
            }
 
            if(HasCube && !ReturningArm && !Functions.ArmReturning())
@@ -499,12 +460,7 @@ public class Omni12000 extends LinearOpMode {
         {
             Functions.SetIntake(0);
             AfterCube = "NONE";
-
-            if(!Hold)
-            {
-                ReturnToBucket();
-            }
-
+            ReturnToBucket();
         }
     }
 
